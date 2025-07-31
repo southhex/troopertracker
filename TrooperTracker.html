@@ -1,0 +1,3144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danger Close Character Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for the Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background for a gritty feel */
+            color: #e2e8f0; /* Light text color */
+        }
+
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #2d3748; /* Darker track */
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568; /* Slightly lighter thumb */
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* Even lighter on hover */
+        }
+
+        /* Button hover effects */
+        .btn-primary {
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .btn-delete {
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        .btn-delete:hover {
+            transform: translateY(-1px);
+            background-color: #c53030; /* Darker red on hover */
+        }
+
+        /* Tab Styles */
+        .tab-btn {
+            transition: all 0.2s ease-in-out;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-btn.active {
+            color: #f87171; /* red-400 */
+            border-bottom-color: #f87171;
+        }
+        .tab-btn:disabled {
+            color: #4a5568; /* gray-600 */
+            cursor: not-allowed;
+        }
+
+
+        /* Momentum Circle Styles */
+        .momentum-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #e2e8f0;
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+        .momentum-circle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Colors for momentum circles */
+        .momentum-circle.negative { border-color: #ef4444; } /* red-500 */
+        .momentum-circle.neutral { border-color: #cbd5e0; } /* gray-300 */
+        .momentum-circle.positive { border-color: #22c55e; } /* green-500 */
+
+        /* Filled state */
+        .momentum-circle.filled.negative { background-color: #ef4444; }
+        .momentum-circle.filled.neutral { background-color: #cbd5e0; color: #1a202c; }
+        .momentum-circle.filled.positive { background-color: #22c55e; }
+
+        /* Target momentum highlight */
+        .momentum-circle.target {
+            border-width: 3px;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.8); /* Green glow */
+        }
+
+        /* Ammo Button Styles */
+        .ammo-button {
+            width: 24px; /* Slightly smaller for a cleaner look without numbers */
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+            border: 2px solid #4a5568; /* Default border */
+        }
+        .ammo-button:hover {
+            transform: scale(1.1);
+        }
+
+        .ammo-button.selected {
+            background-color: #f6e05e; /* yellow-400 */
+            border-color: #f6e05e;
+            color: #1a202c; /* Dark text for contrast */
+        }
+
+        .ammo-button:not(.selected) {
+            background-color: #4a5568; /* gray-600 */
+            color: #e2e8f0;
+        }
+
+        /* Grit Flame Icon Styles */
+        .grit-flame-icon {
+            cursor: pointer;
+            transition: color 0.2s ease, fill 0.2s ease, transform 0.2s ease;
+        }
+        .grit-flame-icon:hover {
+            transform: scale(1.1);
+        }
+        .grit-flame-icon svg {
+            stroke: currentColor;
+            fill: transparent;
+        }
+        .grit-flame-icon.used svg {
+            fill: #f6e05e; /* yellow-400 for filled */
+            stroke: #f6e05e; /* Match stroke for filled */
+            color: #f6e05e; /* For currentColor */
+        }
+        .grit-flame-icon:not(.used) svg {
+            color: #cbd5e0; /* gray-300 for unfilled */
+        }
+        /* Ensure skull icon is never filled */
+        .lucide-skull {
+            fill: none !important;
+        }
+
+        /* Status Bar Styles */
+        .status-bar {
+            height: 24px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #1a202c; /* Dark text for contrast */
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-bar.status-ok { background-color: #22c55e; } /* green-500 */
+        .status-bar.status-grazed { background-color: #facc15; } /* yellow-400 */
+        .status-bar.status-wounded { background-color: #fb923c; } /* orange-400 */
+        .status-bar.status-bleeding-out { background-color: #ef4444; } /* red-500 */
+        .status-bar.status-dead { background-color: #4a5568; color: #e2e8f0; } /* gray-600 */
+
+        /* Collapsible Section Styles */
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+        }
+        .collapsible-content.expanded {
+            max-height: 1500px; /* Adjust as needed for content height */
+            transition: max-height 0.5s ease-in;
+        }
+
+        /* Table specific styles for engagement roster */
+        .engagement-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .engagement-table th, .engagement-table td {
+            padding: 8px 12px;
+            border: none;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .engagement-table th {
+            background-color: #2d3748; /* gray-800 */
+            color: #e2e8f0;
+            font-weight: bold;
+        }
+        .engagement-table tr {
+            transition: background-color 0.3s ease, border-left-color 0.3s ease;
+            border-left: 4px solid transparent;
+            background-color: #374151; /* gray-700 */
+        }
+
+        /* Universal styled select class */
+        .styled-select {
+            background-color: #4a5568;
+            color: #e2e8f0;
+            border: 1px solid #64748b;
+            border-radius: 4px;
+            padding: 4px;
+            width: 100%;
+        }
+
+        .engagement-table .ammo-spent-col {
+            width: 90px;
+        }
+
+        /* Trooper List Item Styles */
+        .trooper-list-item {
+            padding: 0.75rem;
+            border-radius: 0.375rem; /* rounded-md */
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-left-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 500; /* Medium font weight */
+            border-left: 4px solid transparent;
+            background-color: #374151; /* gray-700 */
+        }
+
+        .trooper-list-item:hover {
+            background-color: #4a5568; /* gray-600 */
+        }
+
+        .trooper-list-item.selected {
+            color: #f87171; /* red-400 */
+            font-weight: bold;
+            border-left-color: #ef4444; /* red-500 */
+        }
+
+        /* Status-based row styling */
+        .engagement-table tbody tr.status-row-grazed, .trooper-list-item.status-grazed { background-color: rgba(250, 204, 21, 0.25); }
+        .engagement-table tbody tr.status-row-wounded, .trooper-list-item.status-wounded { background-color: rgba(239, 68, 68, 0.25); }
+        .engagement-table tbody tr.status-row-bleeding-out, .trooper-list-item.status-bleeding-out { background-color: rgba(239, 68, 68, 0.25); }
+        .engagement-table tbody tr.status-row-dead, .trooper-list-item.status-dead { background-color: rgba(74, 85, 104, 0.3); }
+
+        .trooper-list-item.selected:hover {
+            background-color: #4a5568 !important;
+        }
+        .trooper-list-item.selected.status-grazed { background-color: rgba(250, 204, 21, 0.25) !important; }
+        .trooper-list-item.selected.status-wounded { background-color: rgba(239, 68, 68, 0.25) !important; }
+        .trooper-list-item.selected.status-bleeding-out { background-color: rgba(239, 68, 68, 0.25) !important; }
+        .trooper-list-item.selected.status-dead { background-color: rgba(74, 85, 104, 0.3) !important; }
+
+
+        .dimmed {
+            opacity: 0.6;
+            pointer-events: none; /* Disables interaction on the whole container */
+        }
+        /* Re-enable specific interactive elements on a dimmed container */
+        .dimmed .btn-delete, .dimmed .status-bar, .dimmed .status-select, .dimmed #heal-btn {
+            pointer-events: auto;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { background-color: rgba(239, 68, 68, 0.3); }
+            50% { background-color: rgba(239, 68, 68, 0.45); }
+        }
+        .engagement-table tr.animate-pulse-red, .trooper-list-item.animate-pulse-red {
+            animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .trooper-list-item.selected.animate-pulse-red {
+             animation: none;
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal Styles */
+        .modal-backdrop {
+            transition: opacity 0.3s ease;
+        }
+
+        /* Hard Target Hit Pip */
+        .hit-pip {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #9ca3af;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .hit-pip.hit {
+            background-color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        /* Defensive Position Color Keys */
+        .pos-flanked { color: #f87171; } /* red-400 */
+        .pos-in-cover { color: #60a5fa; } /* blue-400 */
+        .pos-fortified { color: #4ade80; } /* green-400 */
+        .pos-moving-up { color: #facc15; } /* yellow-400 */
+        .pos-falling-back { color: #93c5fd; } /* blue-300 */
+
+        /* Hide number input spinners and center text */
+        .roll-input {
+            text-align: center;
+        }
+        .roll-input::-webkit-inner-spin-button,
+        .roll-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .roll-input {
+            -moz-appearance: textfield;
+        }
+
+        /* Sector Card Styling */
+        .sector-card.current-sector {
+            border-left-color: #f87171; /* red-400 */
+            background-color: #4a5568;
+        }
+        .sector-card.is-lz { border-color: #60a5fa; } /* blue-400 */
+        .sector-card.is-ez { border-color: #4ade80; } /* green-400 */
+
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="container mx-auto p-4 md:p-6 bg-gray-800 rounded-lg shadow-xl max-w-7xl"> <!-- Widened viewport -->
+        <h1 class="text-4xl font-bold text-center mb-4 text-red-500 tracking-wider">DANGER CLOSE: TROOPER TRACKER</h1>
+
+        <!-- Locked Mission Summary Card -->
+        <div id="missionSummaryCard" class="hidden bg-gray-900/50 p-4 rounded-lg shadow-md mb-4 border-l-4 border-red-500">
+            <div class="flex justify-between items-start">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-red-400" id="summarySquadName"></h2>
+                            <p class="text-sm text-gray-300" id="summaryMissionName"></p>
+                        </div>
+                        <div id="summaryMissionTypeTag" class="text-xs font-bold uppercase px-2 py-1 rounded-full bg-red-800 text-red-200"></div>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        <p><strong>Difficulty:</strong> <span id="summaryDifficulty"></span></p>
+                        <p><strong>Objective:</strong> <span id="summaryObjectiveDetails"></span></p>
+                        <p id="summaryEZContainer" class="hidden"><strong>Extraction Zone:</strong> <span id="summaryExtractionZone"></span></p>
+                        <p><strong>Notes:</strong> <span id="summaryNotes"></span></p>
+                    </div>
+                </div>
+                <button id="editBriefingBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-full btn-primary text-xs flex items-center">
+                    <svg data-lucide="edit-3" class="mr-1 w-4 h-4"></svg>Edit
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="mb-4 border-b border-gray-600">
+            <nav class="flex -mb-px space-x-6" aria-label="Tabs">
+                <button class="tab-btn active text-lg font-semibold py-3 px-1" data-tab="mission">Mission Hub</button>
+                <button class="tab-btn text-lg font-semibold py-3 px-1" data-tab="squad">Barracks</button>
+                <button id="engagementTabBtn" class="tab-btn text-lg font-semibold py-3 px-1" data-tab="engagement">Engagement</button>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div>
+            <!-- Mission Hub Tab -->
+            <div id="missionTabContent" class="tab-content">
+                <!-- Mission Details Section -->
+                <div id="missionBriefingSection" class="bg-gray-700 p-6 rounded-lg shadow-md mb-8">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-semibold mb-4 text-red-400 flex items-center">
+                            <svg data-lucide="clipboard-list" class="mr-2"></svg>
+                            Mission Briefing
+                        </h2>
+                        <button id="doneBriefingBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-full btn-primary text-xs flex items-center -mt-4">
+                            <svg data-lucide="check" class="mr-1 w-4 h-4"></svg>Start Mission
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="squadName" class="block text-gray-300 text-sm font-bold mb-2 flex items-center">
+                                <svg data-lucide="users" class="mr-1 w-4 h-4"></svg>
+                                Squad Name:
+                            </label>
+                            <input type="text" id="squadName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-gray-300" placeholder="e.g., Alpha Squad">
+                        </div>
+                        <div>
+                            <label for="missionName" class="block text-gray-300 text-sm font-bold mb-2 flex items-center">
+                                <svg data-lucide="flag" class="mr-1 w-4 h-4"></svg>
+                                Mission Name:
+                            </label>
+                            <input type="text" id="missionName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-gray-300" placeholder="e.g., Operation Ironclad">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="missionDifficulty" class="block text-gray-300 text-sm font-bold mb-2 flex items-center">
+                                <svg data-lucide="gauge" class="mr-1 w-4 h-4"></svg>
+                                Mission Difficulty:
+                            </label>
+                            <select id="missionDifficulty" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-gray-300">
+                                <option value="Routine">Routine</option>
+                                <option value="Hazardous">Hazardous</option>
+                                <option value="Desperate">Desperate</option>
+                            </select>
+                        </div>
+                        <div>
+                             <label for="missionType" class="block text-gray-300 text-sm font-bold mb-2 flex items-center">
+                                <svg data-lucide="target" class="mr-1 w-4 h-4"></svg>
+                                Mission Type:
+                            </label>
+                            <select id="missionType" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-gray-300">
+                                <option value="Seize & Secure">Seize & Secure</option>
+                                <option value="Hit & Run">Hit & Run</option>
+                                <option value="Defensive Engagement">Defensive Engagement</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="objectiveDetails" class="block text-gray-300 text-sm font-bold mb-2 flex items-center">
+                                <svg data-lucide="list-checks" class="mr-1 w-4 h-4"></svg>
+                                Objective Details:
+                            </label>
+                            <input type="text" id="objectiveDetails" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-gray-300" placeholder="e.g., Destroy the anti-air battery">
+                        </div>
+                        <div id="extractionZoneContainer" class="hidden">
+                            <label for="extractionZone" class="block text-gray-300 text-sm font-bold mb-2 flex items-center">
+                                <svg data-lucide="send-to-back" class="mr-1 w-4 h-4"></svg>
+                                Extraction Zone (EZ):
+                            </label>
+                            <input type="text" id="extractionZone" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-gray-300" placeholder="e.g., Sector 9 Rooftops">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="missionNotes" class="block text-gray-300 text-sm font-bold mb-2 flex items-center">
+                            <svg data-lucide="notebook-text" class="mr-1 w-4 h-4"></svg>
+                            Mission Notes:
+                        </label>
+                        <textarea id="missionNotes" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-gray-300" placeholder="Any important mission details..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Catch Breath Section -->
+                <div id="catchBreathSection" class="hidden bg-gray-700 p-6 rounded-lg shadow-md mb-8">
+                     <h2 class="text-2xl font-semibold mb-4 text-green-400 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg data-lucide="heart-pulse" class="mr-2"></svg>
+                            Catch Breath
+                        </div>
+                        <button id="finishCatchBreathBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-full btn-primary text-xs flex items-center">
+                            <svg data-lucide="check" class="mr-1 w-4 h-4"></svg>Done
+                        </button>
+                    </h2>
+                    <p class="text-sm text-gray-400 mb-4">The squad has a moment to regroup. Medics can tend to the wounded.</p>
+                    <div id="catchBreathTrooperList" class="space-y-3">
+                        <!-- Trooper medical statuses will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Mission Tracker Section -->
+                <div id="missionTrackerContainer" class="bg-gray-700 p-6 rounded-lg shadow-md mb-8">
+                     <h2 id="missionTrackerHeader" class="text-2xl font-semibold mb-4 text-red-400 flex items-center cursor-pointer justify-between">
+                        <div class="flex items-center">
+                            <svg data-lucide="map" class="mr-2"></svg>
+                            Mission Tracker
+                        </div>
+                        <svg id="missionToggleIcon" data-lucide="chevron-down" class="w-6 h-6 transition-transform"></svg>
+                    </h2>
+                    <div id="missionContent" class="collapsible-content expanded">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Left Side: Mission Map -->
+                            <div class="bg-gray-800 p-4 rounded-lg shadow-inner border border-gray-600">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-xl font-semibold text-gray-300">Mission Map</h3>
+                                    <button id="addSectorBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-full btn-primary text-sm flex items-center">
+                                        <svg data-lucide="plus" class="mr-1 w-4 h-4"></svg>Add Sector
+                                    </button>
+                                </div>
+                                <div id="sectorList" class="space-y-3 max-h-96 overflow-y-auto">
+                                    <!-- Sector cards will be injected here -->
+                                </div>
+                            </div>
+                            <!-- Right Side: Advance! Roll Calculator -->
+                            <div class="bg-gray-800 p-4 rounded-lg shadow-inner border border-gray-600">
+                                <h3 class="text-xl font-semibold text-gray-300 mb-4">Advance! Roll Calculator</h3>
+                                <div class="space-y-4">
+                                    <!-- Modifiers -->
+                                    <div class="grid grid-cols-2 gap-4 text-sm">
+                                        <div class="bg-gray-700 p-2 rounded-md"><strong>Injuries:</strong> <span id="injuriesModifier">0</span> <span id="injuriesModifierSource" class="text-gray-400 text-xs"></span></div>
+                                        <div class="bg-gray-700 p-2 rounded-md"><strong>Mobility:</strong> <span id="mobilityModifier">0</span> <span id="mobilityModifierSource" class="text-gray-400 text-xs"></span></div>
+                                        <div class="bg-gray-700 p-2 rounded-md flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <label for="fatigueModifierInput" class="mr-2"><strong>Fatigue:</strong></label>
+                                                <input type="number" id="fatigueModifierInput" value="0" class="roll-input bg-gray-600 w-12 rounded-md p-1">
+                                            </div>
+                                            <div class="flex items-center gap-1">
+                                                <span class="text-xs text-gray-400">(<span id="advanceRollsMade">0</span> rolls)</span>
+                                                <button id="resetFatigueBtn" class="text-gray-400 hover:text-white">
+                                                    <svg data-lucide="rotate-ccw" class="w-4 h-4"></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="bg-gray-700 p-2 rounded-md flex items-center">
+                                            <label for="weatherModifierSelect" class="mr-2"><strong>Weather:</strong></label>
+                                            <select id="weatherModifierSelect" class="styled-select text-sm p-1 flex-grow">
+                                                <option value="0">Clear (0)</option>
+                                                <option value="-1">Bad (-1)</option>
+                                                <option value="-2">Terrible (-2)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="text-center bg-gray-900/50 p-2 rounded-md">
+                                        <strong>Total Modifier:</strong> <span id="totalModifier" class="font-bold text-lg text-yellow-400">0</span>
+                                    </div>
+                                    <!-- Roll Input -->
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex-grow">
+                                            <label for="advanceDiceRollInput" class="block text-sm font-medium text-gray-300">Enter 2d3 Roll:</label>
+                                            <input type="number" id="advanceDiceRollInput" min="2" max="6" class="roll-input mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 px-3 text-white">
+                                        </div>
+                                        <div class="flex-grow">
+                                            <label for="targetThreatSelect" class="block text-sm font-medium text-gray-300">Target Threat:</label>
+                                            <select id="targetThreatSelect" class="styled-select mt-1 w-full">
+                                                <option value="1">Light</option>
+                                                <option value="2">Standard</option>
+                                                <option value="3">Heavy</option>
+                                                <option value="4">Overwhelming</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button id="calculateAdvanceBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full btn-primary flex items-center justify-center">
+                                        <svg data-lucide="dices" class="mr-2"></svg>Calculate Outcome
+                                    </button>
+                                    <!-- Result Display -->
+                                    <div id="advanceResultDisplay" class="hidden bg-gray-900/50 p-3 rounded-md text-center space-y-3">
+                                        <!-- Result will be injected here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Squad Roster Tab -->
+            <div id="squadTabContent" class="tab-content hidden">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Left Panel: Barracks Lists -->
+                    <div class="md:w-1/3 space-y-6">
+                        <!-- Deployed Squad -->
+                        <div class="bg-gray-800 p-4 rounded-lg shadow-inner border border-gray-600">
+                            <h3 id="deployedSquadHeader" class="text-xl font-semibold text-red-400 mb-4">Deployed Squad (0/5)</h3>
+                            <ul id="deployedList" class="space-y-2 min-h-[50px]">
+                                <!-- Deployed troopers will be injected here -->
+                            </ul>
+                        </div>
+
+                        <!-- Ready Roster -->
+                        <div class="bg-gray-800 p-4 rounded-lg shadow-inner border border-gray-600">
+                            <h3 class="text-xl font-semibold text-green-400 mb-4">Ready Roster</h3>
+                            <ul id="readyList" class="space-y-2 min-h-[50px]">
+                                <!-- Ready troopers will be injected here -->
+                            </ul>
+                        </div>
+
+                        <!-- Recovering -->
+                        <div class="bg-gray-800 p-4 rounded-lg shadow-inner border border-gray-600">
+                            <h3 class="text-xl font-semibold text-yellow-400 mb-4">Recovering</h3>
+                            <ul id="recoveringList" class="space-y-2 min-h-[50px]">
+                                <!-- Recovering troopers will be injected here -->
+                            </ul>
+                        </div>
+
+                        <!-- Memorial -->
+                        <div class="bg-gray-800 p-4 rounded-lg shadow-inner border border-gray-600">
+                            <h3 class="text-xl font-semibold text-gray-400 mb-4">Memorial</h3>
+                            <ul id="memorialList" class="space-y-2 min-h-[50px]">
+                                <!-- KIA troopers will be injected here -->
+                            </ul>
+                        </div>
+
+                         <div class="text-center mt-2">
+                            <button id="addTrooperBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full shadow-lg btn-primary flex items-center justify-center text-sm mx-auto">
+                                <svg data-lucide="plus-circle" class="mr-1 w-4 h-4"></svg>
+                                Add Trooper to Barracks
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Trooper Details -->
+                    <div class="md:w-2/3 bg-gray-700 p-4 rounded-lg shadow-inner border border-gray-600 min-h-[300px] flex items-center justify-center">
+                        <div id="selectedTrooperDetails" class="w-full">
+                            <!-- Detailed trooper card will be displayed here -->
+                            <p class="text-gray-400 text-center py-10">Select a Trooper from the Barracks to view/edit details.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Engagement Tab -->
+            <div id="engagementTabContent" class="tab-content hidden">
+                <!-- Engagement Tracker Section -->
+                <div class="bg-gray-700 p-6 rounded-lg shadow-md mb-8">
+                    <div id="engagementContent">
+                        <div id="startEngagementSection" class="text-center py-4">
+                            <button id="startEngagementBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg btn-primary flex items-center justify-center mx-auto">
+                                <svg data-lucide="play" class="mr-2"></svg>
+                                Start Engagement
+                            </button>
+                        </div>
+                        <div id="activeEngagementSection" class="hidden">
+                            <!-- Exchange Tracker -->
+                            <div class="flex justify-between items-center bg-gray-600 p-3 rounded-md mb-4">
+                                <h3 class="text-xl font-semibold text-gray-200 flex items-center">
+                                    <svg data-lucide="rotate-ccw" class="mr-2"></svg>
+                                    Exchange&nbsp;<span id="currentRoundDisplay">1</span>
+                                </h3>
+                                <div class="flex items-center gap-4">
+                                     <button id="retreatBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full btn-primary flex items-center">
+                                        <svg data-lucide="undo-2" class="mr-2 w-4 h-4"></svg>
+                                        Retreat
+                                    </button>
+                                     <button id="endEngagementBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full btn-primary flex items-center">
+                                        <svg data-lucide="flag-off" class="mr-2 w-4 h-4"></svg>
+                                        End Engagement
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Engagement Controls -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <!-- Left Side: Threat & Cover -->
+                                <div class="bg-gray-600 p-4 rounded-lg shadow-md text-center space-y-4">
+                                    <div>
+                                        <label for="encounterDifficulty" class="block text-gray-300 text-sm font-bold mb-2 flex items-center justify-center">
+                                            <svg data-lucide="shield-alert" class="mr-2"></svg> Threat Level:
+                                        </label>
+                                        <select id="encounterDifficulty" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 bg-gray-300 leading-tight focus:outline-none focus:shadow-outline">
+                                            <option value="1">1 - Light</option>
+                                            <option value="2" selected>2 - Standard</option>
+                                            <option value="3">3 - Heavy</option>
+                                            <option value="4">4 - Overwhelming</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="coverCondition" class="block text-gray-300 text-sm font-bold mb-2 flex items-center justify-center">
+                                            <svg data-lucide="shield" class="mr-2"></svg> Cover Conditions:
+                                        </label>
+                                        <select id="coverCondition" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 bg-gray-300 leading-tight focus:outline-none focus:shadow-outline">
+                                            <option value="Open">Open</option>
+                                            <option value="Normal" selected>Normal</option>
+                                            <option value="Dense">Dense</option>
+                                        </select>
+                                        <p id="coverConditionDescription" class="text-xs text-gray-400 mt-2 min-h-[2.5rem] flex items-center justify-center"></p>
+                                    </div>
+                                </div>
+                                <!-- Right Side: Hard Targets -->
+                                <div class="bg-gray-600 p-4 rounded-lg shadow-md">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h4 class="text-lg font-semibold text-red-400 flex items-center">
+                                            <svg data-lucide="target" class="mr-2 w-5 h-5"></svg>Hard Targets
+                                        </h4>
+                                        <button id="addHardTargetBtn" class="bg-gray-500 hover:bg-gray-400 text-gray-900 font-bold py-1 px-3 rounded-full btn-primary text-xs flex items-center">
+                                            <svg data-lucide="plus" class="mr-1 w-4 h-4"></svg>Add
+                                        </button>
+                                    </div>
+                                    <div id="hardTargetsContainer" class="space-y-2 max-h-40 overflow-y-auto">
+                                        <!-- Hard Target cards will be injected here -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Momentum Tracker -->
+                            <div class="bg-gray-600 p-4 rounded-lg shadow-md mb-4 text-center">
+                                <label class="block text-gray-300 text-sm font-bold mb-2 flex items-center justify-center">
+                                    <svg data-lucide="zap" class="mr-2"></svg> Momentum:
+                                </label>
+                                <div id="engagementMomentumButtons" class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-4">
+                                    <!-- Momentum circles will be generated by JS -->
+                                </div>
+                            </div>
+
+                            <!-- Engagement Roster (Table) -->
+                            <div class="overflow-x-auto rounded-lg mb-4">
+                                <table class="engagement-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Trooper</th>
+                                            <th>Status</th>
+                                            <th>Grit</th>
+                                            <th>Ammo</th>
+                                            <th>Intent</th>
+                                            <th class="ammo-spent-col">Ammo Spent</th>
+                                            <th id="target-header-col" class="hidden">Target</th>
+                                            <th>Offensive Pos.</th>
+                                            <th>Defensive Pos.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="engagementTroopersContainer">
+                                        <!-- Engagement Trooper Rows will be injected here -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Roll Resolution Section -->
+                            <div class="bg-gray-900/50 p-4 rounded-lg mt-4 border border-gray-600">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-xl font-semibold text-yellow-400 flex items-center">
+                                        <svg data-lucide="dice-6" class="mr-2"></svg>
+                                        Roll Resolution
+                                    </h3>
+                                     <div class="flex items-center gap-4">
+                                        <button id="resolveExchangeBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full btn-primary flex items-center">
+                                            <svg data-lucide="dice-5" class="mr-2"></svg>
+                                            Resolve Exchange
+                                        </button>
+                                        <button id="nextRoundBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full btn-primary flex items-center hidden">
+                                            <svg data-lucide="arrow-right" class="mr-2"></svg>
+                                            Next Exchange
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <!-- Offense Roll Card -->
+                                    <div id="offenseRollCard" class="bg-gray-600 p-4 rounded-lg shadow-md">
+                                        <h4 class="text-lg font-semibold text-red-400 mb-2 flex items-center"><svg data-lucide="swords" class="mr-2 w-5 h-5"></svg>Offense Roll</h4>
+                                        <div id="offenseRollContext" class="text-center py-2">
+                                            <!-- Informational dice pool will be injected here -->
+                                        </div>
+                                        <div class="mt-2">
+                                            <label for="offenseRollInput" class="block text-sm font-medium text-gray-300">Enter Highest d6 Result:</label>
+                                            <input type="number" id="offenseRollInput" min="1" max="6" class="roll-input mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm">
+                                        </div>
+                                        <div id="successAtACostChoice" class="hidden mt-3 text-center bg-yellow-900/50 p-3 rounded-md">
+                                            <p class="text-sm text-yellow-300 mb-2 font-semibold">Outcome Choice</p>
+                                            <p class="text-xs text-gray-400 mb-3">Your roll of <span id="costRollValue"></span> allows a choice.</p>
+                                            <div class="flex justify-center gap-2">
+                                                <button id="holdPositionBtn" class="bg-gray-500 hover:bg-gray-400 text-gray-900 text-xs py-1 px-3 rounded-full btn-primary">Hold Position</button>
+                                                <button id="successAtACostBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white text-xs py-1 px-3 rounded-full btn-primary">Success at Cost</button>
+                                            </div>
+                                            <div id="costTrooperSelection" class="flex items-center gap-2 mt-2 hidden">
+                                                <label for="vulnerableTrooperSelect" class="text-xs text-gray-400">Cost applied to:</label>
+                                                <select id="vulnerableTrooperSelect" class="styled-select flex-grow text-xs"></select>
+                                                <button id="randomVulnerableBtn" class="bg-gray-500 hover:bg-gray-400 text-gray-900 p-2 rounded-full btn-primary">
+                                                    <svg data-lucide="dices" class="w-4 h-4"></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- Universal outcome display -->
+                                        <div id="offenseRollOutcome" class="hidden mt-3 text-center bg-gray-800 p-3 rounded-md text-sm space-y-2">
+                                            <p id="outcomeText"></p>
+                                            <div id="additionalSixesSection" class="hidden text-left">
+                                                <label for="additionalSixesInput" class="block text-sm font-medium text-gray-300">Additional 6s rolled:</label>
+                                                <input type="number" id="additionalSixesInput" min="0" value="0" class="roll-input mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-1 px-2 text-white">
+                                            </div>
+                                        </div>
+                                        <ul id="offenseRollBreakdown" class="text-xs text-gray-400 text-center space-y-1 mt-2"></ul>
+                                        <!-- Hard Target Rolls will be injected here -->
+                                        <div id="hardTargetRollsSection" class="mt-4 pt-4 border-t border-gray-500 space-y-4"></div>
+                                    </div>
+                                    <!-- Defense Roll Card -->
+                                    <div class="bg-gray-600 p-4 rounded-lg shadow-md">
+                                        <h4 class="text-lg font-semibold text-red-400 mb-2 flex items-center"><svg data-lucide="shield" class="mr-2 w-5 h-5"></svg>Defense Rolls</h4>
+                                        <ul id="defenseRollList" class="space-y-3 text-sm">
+                                            <!-- Per-trooper defense rolls and inputs will be injected here -->
+                                        </ul>
+                                    </div>
+                                    <!-- Movement Card -->
+                                    <div id="movementRollCard" class="bg-gray-600 p-4 rounded-lg shadow-md">
+                                        <h4 class="text-lg font-semibold text-red-400 mb-2 flex items-center"><svg data-lucide="move" class="mr-2 w-5 h-5"></svg>Movement Rolls</h4>
+                                        <ul id="movementRollList" class="space-y-3 text-sm">
+                                            <!-- Per-trooper movement instructions will be injected here -->
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Management (Persistent Footer) -->
+        <div class="mt-6 border-t border-gray-600 pt-4 flex justify-end gap-4">
+            <button id="endMissionBtn" class="hidden bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full shadow-lg btn-primary flex items-center justify-center text-sm">
+                <svg data-lucide="flag-triangle-right" class="mr-2 w-4 h-4"></svg>
+                End Mission
+            </button>
+            <button id="importDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full shadow-lg btn-primary flex items-center justify-center text-sm">
+                <svg data-lucide="upload" class="mr-2 w-4 h-4"></svg>
+                Import Data
+            </button>
+            <input type="file" id="importFileInput" class="hidden" accept=".json">
+            <button id="exportDataBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full shadow-lg btn-primary flex items-center justify-center text-sm">
+                <svg data-lucide="download" class="mr-2 w-4 h-4"></svg>
+                Export Data
+            </button>
+            <button id="clearDataBtn" class="bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded-full shadow-lg btn-primary flex items-center justify-center text-sm">
+                <svg data-lucide="trash-2" class="mr-2 w-4 h-4"></svg>
+                Clear All Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal-backdrop fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50 opacity-0">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md text-center border border-gray-600">
+            <h3 id="modalTitle" class="text-xl font-bold text-red-400 mb-4">Are you sure?</h3>
+            <p id="modalText" class="text-gray-300 mb-6">This will permanently delete all mission and trooper data from your browser. This action cannot be undone.</p>
+            <div class="flex justify-center gap-4">
+                <button id="modalCancelBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full btn-primary">Cancel</button>
+                <button id="modalConfirmBtn" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-6 rounded-full btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Retreat Modal -->
+    <div id="retreatModal" class="modal-backdrop fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50 opacity-0">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg text-center border border-gray-600">
+            <h3 class="text-xl font-bold text-yellow-400 mb-4">Squad is Retreating!</h3>
+            <p class="text-gray-300 mb-6">The squad is falling back to the previous sector. How do they disengage?</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Attempt to Escape -->
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2">Attempt to Escape</h4>
+                    <p class="text-xs text-gray-400 mb-3">Roll 1d6. On a 4+, the enemy pursues. On a 1-3, you break contact.</p>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="escapeRollInput" min="1" max="6" class="roll-input w-16 bg-gray-600 border border-gray-500 rounded-md py-1">
+                        <button id="confirmEscapeBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full btn-primary text-sm">Confirm Roll</button>
+                    </div>
+                </div>
+                <!-- Draw Them Out -->
+                <div class="bg-gray-700 p-4 rounded-lg flex flex-col justify-center">
+                     <h4 class="font-semibold mb-2">Draw Them Out</h4>
+                    <p class="text-xs text-gray-400 mb-3">The enemy automatically pursues, but with reduced forces.</p>
+                    <button id="drawOutBtn" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full btn-primary text-sm">Confirm Action</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debriefing Modal -->
+    <div id="debriefingModal" class="modal-backdrop fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50 opacity-0">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md text-center border border-gray-600">
+            <h3 class="text-xl font-bold text-green-400 mb-4">Mission Complete</h3>
+            <p class="text-gray-300 mb-6">How did the mission end?</p>
+            <div class="flex justify-center gap-4">
+                <button id="missionSuccessBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full btn-primary">Success</button>
+                <button id="missionFailureBtn" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-6 rounded-full btn-primary">Failure</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- STATE MANAGEMENT ---
+            let troopers = [];
+            let hardTargets = [];
+            let sectors = [];
+            let sectorHistory = [];
+            let trooperIdCounter = 0;
+            let hardTargetIdCounter = 0;
+            let sectorIdCounter = 0;
+            let engagementMomentum = 0;
+            let momentumToWin = 3; // Default to Standard Threat Level
+            let currentRound = 1;
+            let selectedTrooperId = null;
+            let currentConfirmAction = null;
+            let successAtCostChoice = null; // null, 'hold', or 'cost'
+            let vulnerableTrooperId = null; // ID of trooper affected by 'Success at a Cost'
+            let hardTargetRollOutcomes = {}; // { htId: { choice: 'cost'/'hold', vulnerableTrooperId: 'trooper-x' } }
+            let movementOutcomes = {}; // Stores the results of movement rolls for the round
+            let squadSectorId = null;
+            let advanceRollsMade = 0;
+            let isBriefingLocked = false;
+            let advanceRollOutcomePositions = null; // To store positions from Advance! roll
+            let missionStatus = 'Briefing'; // 'Briefing', 'InProgress', 'Debriefing'
+
+
+            // --- DOM ELEMENT REFERENCES ---
+            const deployedList = document.getElementById('deployedList');
+            const readyList = document.getElementById('readyList');
+            const recoveringList = document.getElementById('recoveringList');
+            const memorialList = document.getElementById('memorialList');
+            const deployedSquadHeader = document.getElementById('deployedSquadHeader');
+            const selectedTrooperDetails = document.getElementById('selectedTrooperDetails');
+            const addTrooperBtn = document.getElementById('addTrooperBtn');
+            const missionDifficultySelect = document.getElementById('missionDifficulty');
+            const squadNameInput = document.getElementById('squadName');
+            const missionNameInput = document.getElementById('missionName');
+            const missionTypeSelect = document.getElementById('missionType');
+            const objectiveDetailsInput = document.getElementById('objectiveDetails');
+            const extractionZoneContainer = document.getElementById('extractionZoneContainer');
+            const extractionZoneInput = document.getElementById('extractionZone');
+            const missionNotesTextarea = document.getElementById('missionNotes');
+            const exportDataBtn = document.getElementById('exportDataBtn');
+            const importDataBtn = document.getElementById('importDataBtn');
+            const importFileInput = document.getElementById('importFileInput');
+            const clearDataBtn = document.getElementById('clearDataBtn');
+            const endMissionBtn = document.getElementById('endMissionBtn');
+            const confirmationModal = document.getElementById('confirmationModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalText = document.getElementById('modalText');
+            const modalCancelBtn = document.getElementById('modalCancelBtn');
+            const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+            const retreatModal = document.getElementById('retreatModal');
+            const confirmEscapeBtn = document.getElementById('confirmEscapeBtn');
+            const drawOutBtn = document.getElementById('drawOutBtn');
+            const escapeRollInput = document.getElementById('escapeRollInput');
+            const debriefingModal = document.getElementById('debriefingModal');
+            const missionSuccessBtn = document.getElementById('missionSuccessBtn');
+            const missionFailureBtn = document.getElementById('missionFailureBtn');
+
+
+            // Tab Elements
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const engagementTabBtn = document.getElementById('engagementTabBtn');
+
+            // Mission Briefing Lock
+            const missionBriefingSection = document.getElementById('missionBriefingSection');
+            const missionSummaryCard = document.getElementById('missionSummaryCard');
+            const doneBriefingBtn = document.getElementById('doneBriefingBtn');
+            const editBriefingBtn = document.getElementById('editBriefingBtn');
+            const summarySquadName = document.getElementById('summarySquadName');
+            const summaryMissionName = document.getElementById('summaryMissionName');
+            const summaryMissionTypeTag = document.getElementById('summaryMissionTypeTag');
+            const summaryDifficulty = document.getElementById('summaryDifficulty');
+            const summaryObjectiveDetails = document.getElementById('summaryObjectiveDetails');
+            const summaryEZContainer = document.getElementById('summaryEZContainer');
+            const summaryExtractionZone = document.getElementById('summaryExtractionZone');
+            const summaryNotes = document.getElementById('summaryNotes');
+
+
+            // Mission Tracker Elements
+            const missionTrackerContainer = document.getElementById('missionTrackerContainer');
+            const missionTrackerHeader = document.getElementById('missionTrackerHeader');
+            const missionContent = document.getElementById('missionContent');
+            const missionToggleIcon = document.getElementById('missionToggleIcon');
+            const addSectorBtn = document.getElementById('addSectorBtn');
+            const sectorList = document.getElementById('sectorList');
+            const injuriesModifierSpan = document.getElementById('injuriesModifier');
+            const mobilityModifierSpan = document.getElementById('mobilityModifier');
+            const injuriesModifierSource = document.getElementById('injuriesModifierSource');
+            const mobilityModifierSource = document.getElementById('mobilityModifierSource');
+            const fatigueModifierInput = document.getElementById('fatigueModifierInput');
+            const weatherModifierSelect = document.getElementById('weatherModifierSelect');
+            const totalModifierSpan = document.getElementById('totalModifier');
+            const advanceDiceRollInput = document.getElementById('advanceDiceRollInput');
+            const targetThreatSelect = document.getElementById('targetThreatSelect');
+            const calculateAdvanceBtn = document.getElementById('calculateAdvanceBtn');
+            const advanceResultDisplay = document.getElementById('advanceResultDisplay');
+            const advanceRollsMadeSpan = document.getElementById('advanceRollsMade');
+            const resetFatigueBtn = document.getElementById('resetFatigueBtn');
+            const catchBreathSection = document.getElementById('catchBreathSection');
+            const finishCatchBreathBtn = document.getElementById('finishCatchBreathBtn');
+            const catchBreathTrooperList = document.getElementById('catchBreathTrooperList');
+
+
+            // Engagement Elements
+            const engagementContent = document.getElementById('engagementContent');
+            const startEngagementBtn = document.getElementById('startEngagementBtn');
+            const endEngagementBtn = document.getElementById('endEngagementBtn');
+            const retreatBtn = document.getElementById('retreatBtn');
+            const startEngagementSection = document.getElementById('startEngagementSection');
+            const activeEngagementSection = document.getElementById('activeEngagementSection');
+            const encounterDifficultySelect = document.getElementById('encounterDifficulty');
+            const coverConditionSelect = document.getElementById('coverCondition');
+            const coverConditionDescription = document.getElementById('coverConditionDescription');
+            const engagementMomentumButtons = document.getElementById('engagementMomentumButtons');
+            const engagementTroopersContainer = document.getElementById('engagementTroopersContainer');
+            const currentRoundDisplay = document.getElementById('currentRoundDisplay');
+            const resolveExchangeBtn = document.getElementById('resolveExchangeBtn');
+            const nextRoundBtn = document.getElementById('nextRoundBtn');
+            const offenseRollCard = document.getElementById('offenseRollCard');
+            const offenseRollContext = document.getElementById('offenseRollContext');
+            const offenseRollInput = document.getElementById('offenseRollInput');
+            const offenseRollBreakdown = document.getElementById('offenseRollBreakdown');
+            const offenseRollOutcome = document.getElementById('offenseRollOutcome');
+            const defenseRollList = document.getElementById('defenseRollList');
+            const successAtACostChoiceDiv = document.getElementById('successAtACostChoice');
+            const holdPositionBtn = document.getElementById('holdPositionBtn');
+            const successAtACostBtn = document.getElementById('successAtACostBtn');
+            const costRollValueSpan = document.getElementById('costRollValue');
+            const costTrooperSelectionDiv = document.getElementById('costTrooperSelection');
+            const vulnerableTrooperSelect = document.getElementById('vulnerableTrooperSelect');
+            const randomVulnerableBtn = document.getElementById('randomVulnerableBtn');
+            const addHardTargetBtn = document.getElementById('addHardTargetBtn');
+            const hardTargetsContainer = document.getElementById('hardTargetsContainer');
+            const targetHeaderCol = document.getElementById('target-header-col');
+            const movementRollCard = document.getElementById('movementRollCard');
+            const movementRollList = document.getElementById('movementRollList');
+            const hardTargetRollsSection = document.getElementById('hardTargetRollsSection');
+
+            // --- DATA & DESCRIPTIONS ---
+            const offensivePositionDescriptions = {
+                "Limited": "-1d6 Offense Roll when Firing.",
+                "Engaged": "Normal Offense Roll.",
+                "Flanking": "+1d6 Offense Roll when Firing."
+            };
+            const defensivePositionDescriptions = {
+                "Flanked": { text: "Injury on 1-3", range: 3, className: 'pos-flanked' },
+                "In Cover": { text: "Injury on 1-2", range: 2, className: 'pos-in-cover' },
+                "Fortified": { text: "Injury on 1", range: 1, className: 'pos-fortified' }
+            };
+            const armorDescriptions = {
+                "None": "Standard protection.",
+                "Light Armor": "Roll twice when Moving, pick the best result.",
+                "Medium Armor": "Ignore first Injury taken per Engagement.",
+                "Heavy Armor": "Reduces injury range by 1."
+            };
+            const specialGearDescriptions = {
+                "None": "No special gear equipped.",
+                "LMG": "Passive: +1d6 to any Defense Roll when this Trooper is providing Covering Fire.",
+                "Sniper Rifle": "Passive: +1d6 to the Offense Roll when Fortified. An additional +1d6 when Fortified and didn't Move in the previous Exchange.",
+                "Grenade Launcher": "Active: Launch a grenade against a Hard Target (counts as a Hit), or at another Trooper's target, granting them the benefit of Flanking in the next Offense Roll. Multiple grenades can be fired in one attack - each costing 1 Ammo.",
+                "Medic Gear": "Allows the user to patch up Wounded Troopers back to Grazed when out of combat. It costs 1 Ammo to restore a Trooper to Grazed.",
+                "Drone Gear": "Once per mission, add +1 to the next Advance Roll.",
+                "Radio Gear": "Call in an artillery strike on the current Sector, once per Mission. Hits in 1d2 Exchanges from now. When it hits, gain +2 Momentum instantly, with all ground-based Hard Targets being destroyed. All Troopers must make a Defense Roll as if Flanked; gaining 1d3 Injury on failure."
+            };
+            const coverConditionData = {
+                "Open": "Troopers can never be in a Fortified position.",
+                "Normal": "No more than 2 Troopers can be Fortified at a time.",
+                "Dense": "No limit on how many Troopers can be Fortified."
+            };
+            const advanceRollTable = {
+                // Threat Level 1: Light
+                1: { 2: "Ambushed", 3: "Spotted", 4: "Advantage", 5: "Surprise", 6: "Overwhelm" },
+                // Threat Level 2: Standard
+                2: { 2: "Ambushed", 3: "Spotted", 4: "Spotted", 5: "Advantage", 6: "Overwhelm" },
+                // Threat Level 3: Heavy
+                3: { 2: "Ambushed", 3: "Ambushed", 4: "Spotted", 5: "Spotted", 6: "Advantage" },
+                // Threat Level 4: Overwhelming
+                4: { 2: "Ambushed", 3: "Ambushed", 4: "Spotted", 5: "Spotted", 6: "Spotted" }
+            };
+            const advanceRollOutcomes = {
+                "Ambushed": { text: "Squad starts Flanked & Engaged.", positions: { defensive: 'Flanked', offensive: 'Engaged' } },
+                "Spotted": { text: "Squad starts In Cover & Engaged.", positions: { defensive: 'In Cover', offensive: 'Engaged' } },
+                "Advantage": { text: "Squad starts In Cover & Flanking.", positions: { defensive: 'In Cover', offensive: 'Flanking' } },
+                "Surprise": { text: "Squad starts In Cover & Flanking, with +1 Momentum.", positions: { defensive: 'In Cover', offensive: 'Flanking' } },
+                "Overwhelm": { text: "Enemy routed! No engagement needed. You may Catch Breath.", positions: null }
+            };
+            const maxThreatMap = {
+                'Routine': 2,
+                'Hazardous': 3,
+                'Desperate': 4
+            };
+
+
+            // --- UTILITY FUNCTIONS ---
+            function rollD6() {
+                return Math.floor(Math.random() * 6) + 1;
+            }
+
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            function getDeployedSquad() {
+                return troopers.filter(t => t.deploymentStatus === 'Deployed');
+            }
+
+            // --- BARRACKS & DEPLOYMENT LOGIC ---
+            function setTrooperDeploymentStatus(trooperId, newStatus) {
+                const trooper = troopers.find(t => t.id === trooperId);
+                if (!trooper) return;
+
+                const deployedCount = getDeployedSquad().length;
+                if (newStatus === 'Deployed' && deployedCount >= 5) {
+                    showConfirmationModal("Squad Full", "You can only deploy a maximum of 5 troopers.", () => hideConfirmationModal());
+                    return;
+                }
+
+                if (trooper.deploymentStatus === 'Deployed' && newStatus !== 'Deployed') {
+                    trooper.combatStatus = 'OK';
+                }
+
+                trooper.deploymentStatus = newStatus;
+
+                if (trooper.id === selectedTrooperId) {
+                    displayTrooperDetails(trooperId);
+                }
+
+                renderBarracks();
+                updateAdvanceCalculator();
+                saveState();
+            }
+
+            function renderBarracks() {
+                const lists = {
+                    Deployed: deployedList,
+                    Ready: readyList,
+                    Recovering: recoveringList,
+                    Dead: memorialList
+                };
+
+                Object.values(lists).forEach(list => list.innerHTML = '');
+
+                troopers.forEach(trooper => {
+                    const list = lists[trooper.deploymentStatus];
+                    if (!list) return;
+
+                    const listItem = document.createElement('li');
+                    listItem.id = `li-${trooper.id}`;
+                    listItem.className = 'trooper-list-item';
+                    listItem.dataset.trooperId = trooper.id;
+
+                    if (trooper.id === selectedTrooperId) {
+                        listItem.classList.add('selected');
+                    }
+
+                    let displayName = `${trooper.rank} ${trooper.name || 'Unnamed'}`;
+                    if (trooper.deploymentStatus === 'Dead') {
+                        displayName += ' (KIA)';
+                        listItem.classList.add('opacity-60');
+                    }
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = displayName;
+                    listItem.appendChild(nameSpan);
+
+                    if (missionStatus === 'Briefing') {
+                        if (trooper.deploymentStatus === 'Ready') {
+                            const deployBtn = document.createElement('button');
+                            deployBtn.className = 'deploy-btn bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1 px-2 rounded-full btn-primary ml-2';
+                            deployBtn.innerHTML = `<svg data-lucide="arrow-up" class="w-4 h-4"></svg>`;
+                            listItem.appendChild(deployBtn);
+                        } else if (trooper.deploymentStatus === 'Deployed') {
+                            const returnBtn = document.createElement('button');
+                            returnBtn.className = 'return-btn bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold py-1 px-2 rounded-full btn-primary ml-2';
+                            returnBtn.innerHTML = `<svg data-lucide="arrow-down" class="w-4 h-4"></svg>`;
+                            listItem.appendChild(returnBtn);
+                        }
+                    }
+
+                    list.appendChild(listItem);
+                });
+
+                const deployedCount = getDeployedSquad().length;
+                deployedSquadHeader.textContent = `Deployed Squad (${deployedCount}/5)`;
+
+                lucide.createIcons();
+            }
+
+            // --- RENDER FUNCTIONS ---
+            /**
+             * Generates and displays the detailed card for a selected trooper.
+             * @param {string} trooperId - The ID of the trooper to display.
+             */
+            function displayTrooperDetails(trooperId) {
+                selectedTrooperId = trooperId;
+                const trooper = troopers.find(t => t.id === trooperId);
+                if (!trooper) {
+                    selectedTrooperDetails.innerHTML = '<p class="text-gray-400 text-center py-10">Trooper not found.</p>';
+                    renderBarracks();
+                    return;
+                }
+
+                selectedTrooperDetails.innerHTML = generateDetailedTrooperCardHtml(trooper);
+                addEventListenersToTrooperCard(trooper);
+                renderBarracks();
+                lucide.createIcons();
+            }
+
+            /**
+             * Generates the HTML string for the detailed trooper card.
+             * @param {object} trooper - The trooper object.
+             * @returns {string} The HTML string for the card.
+             */
+            function generateDetailedTrooperCardHtml(trooper) {
+                const { id, name, rank, combatStatus, grit, ammo, armor, specialGear, notes, deploymentStatus } = trooper;
+
+                const isDead = deploymentStatus === 'Dead';
+                const disabledAttribute = isDead ? 'disabled' : '';
+                const armorOptions = Object.keys(armorDescriptions).map(key => `<option value="${key}" ${armor === key ? 'selected' : ''}>${key}</option>`).join('');
+                const specialGearOptions = Object.keys(specialGearDescriptions).map(key => `<option value="${key}" ${specialGear === key ? 'selected' : ''}>${key}</option>`).join('');
+                const displayName = isDead ? `${name} (KIA)` : name;
+                const gritIconHtml = isDead ? `<svg data-lucide="skull" class="w-8 h-8 text-gray-400"></svg>` : `<svg data-lucide="flame" class="w-8 h-8"></svg>`;
+
+                return `
+                    <div id="${id}" class="trooper-card bg-gray-600 p-6 rounded-lg shadow-md border-t-4 border-red-500 animate-fade-in ${isDead ? 'dimmed' : ''}">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="trooper-title text-xl font-semibold text-red-400 flex items-center">
+                                <svg data-lucide="user-check" class="mr-2"></svg>
+                                ${rank} ${displayName || ''}
+                            </h3>
+                            <div class="grit-flame-icon ${grit === 1 && !isDead ? 'used' : ''}">
+                                ${gritIconHtml}
+                            </div>
+                        </div>
+
+                        <!-- Rank and Name -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                            <div class="md:col-span-1">
+                                <label for="${id}-rank" class="block text-gray-300 text-sm font-bold mb-2">Rank:</label>
+                                <select class="trooper-rank shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 bg-gray-300 leading-tight focus:outline-none focus:shadow-outline" ${disabledAttribute}>
+                                    <option value="Pvt" ${rank === 'Pvt' ? 'selected' : ''}>Pvt</option>
+                                    <option value="Cpl" ${rank === 'Cpl' ? 'selected' : ''}>Cpl</option>
+                                    <option value="Sgt" ${rank === 'Sgt' ? 'selected' : ''}>Sgt</option>
+                                    <option value="Lt" ${rank === 'Lt' ? 'selected' : ''}>Lt</option>
+                                    <option value="Capt" ${rank === 'Capt' ? 'selected' : ''}>Capt</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="${id}-name" class="block text-gray-300 text-sm font-bold mb-2">Name:</label>
+                                <input type="text" value="${name}" class="trooper-name shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 bg-gray-300 leading-tight focus:outline-none focus:shadow-outline" placeholder="Trooper's Name" ${disabledAttribute}>
+                            </div>
+                        </div>
+
+                        <!-- Status and Ammo -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div class="text-center">
+                                <label class="block text-gray-300 text-sm font-bold mb-2">Combat Status:</label>
+                                <div class="flex items-center justify-center gap-2">
+                                    <div class="status-bar flex-grow status-${combatStatus.toLowerCase().replace(/\s/g, '-')}">${combatStatus}</div>
+                                    <button class="heal-btn bg-green-600 hover:bg-green-700 text-white rounded-md p-0 w-6 h-6 flex-shrink-0 flex items-center justify-center btn-primary" ${disabledAttribute}>
+                                        <svg data-lucide="briefcase-medical" class="w-4 h-4"></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <label class="block text-gray-300 text-sm font-bold mb-2">Ammo:</label>
+                                <div class="ammo-buttons flex space-x-2 items-center justify-center">
+                                    ${[1, 2, 3].map(val => `<div class="ammo-button ${ammo >= val ? 'selected' : ''}" data-ammo-value="${val}"></div>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Armor and Special Gear -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <label for="${id}-armor" class="block text-gray-300 text-sm font-bold mb-2">Armor:</label>
+                                <select class="trooper-armor shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 bg-gray-300 leading-tight focus:outline-none focus:shadow-outline" ${disabledAttribute}>${armorOptions}</select>
+                                <p class="text-xs text-gray-400 mt-1 min-h-[2.5rem]">${armorDescriptions[armor]}</p>
+                            </div>
+                            <div>
+                                <label for="${id}-specialGear" class="block text-gray-300 text-sm font-bold mb-2">Special Gear:</label>
+                                <select class="trooper-specialGear shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 bg-gray-300 leading-tight focus:outline-none focus:shadow-outline" ${disabledAttribute}>${specialGearOptions}</select>
+                                <p class="text-xs text-gray-400 mt-1 min-h-[2.5rem]">${specialGearDescriptions[specialGear]}</p>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div>
+                            <label for="${id}-notes" class="block text-gray-300 text-sm font-bold mb-2">Notes:</label>
+                            <textarea rows="2" class="trooper-notes shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 bg-gray-300 leading-tight focus:outline-none focus:shadow-outline" placeholder="Distinguishing features, personality, etc." ${disabledAttribute}>${notes}</textarea>
+                        </div>
+
+                        <!-- Delete Button -->
+                        <div class="text-right mt-4">
+                            <button class="delete-trooper-btn bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-full btn-delete flex items-center ml-auto text-sm">
+                                <svg data-lucide="trash-2" class="mr-1 w-4 h-4"></svg>
+                                Delete Trooper
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            /**
+             * Adds event listeners to a newly created trooper card using event delegation.
+             * @param {object} trooper - The trooper object.
+             */
+            function addEventListenersToTrooperCard(trooper) {
+                const card = document.getElementById(trooper.id);
+                if (!card) return;
+
+                card.addEventListener('input', (e) => {
+                    const target = e.target;
+                    let shouldSave = true;
+
+                    if (target.classList.contains('trooper-name')) {
+                        trooper.name = target.value;
+                        updateTrooperCardTitle(trooper);
+                        updateEngagementTrooperCard(trooper);
+                        shouldSave = false;
+                    } else if (target.classList.contains('trooper-notes')) {
+                        trooper.notes = target.value;
+                        shouldSave = false;
+                    } else if (target.classList.contains('trooper-rank')) {
+                        trooper.rank = target.value;
+                        updateTrooperCardTitle(trooper);
+                        updateEngagementTrooperCard(trooper);
+                    } else if (target.classList.contains('trooper-armor')) {
+                        trooper.armor = target.value;
+                        target.nextElementSibling.textContent = armorDescriptions[target.value];
+                    } else if (target.classList.contains('trooper-specialGear')) {
+                        trooper.specialGear = target.value;
+                        target.nextElementSibling.textContent = specialGearDescriptions[target.value];
+                    }
+
+                    updateAdvanceCalculator();
+
+                    if (shouldSave) {
+                        saveState();
+                    } else {
+                        debouncedSaveState();
+                    }
+                });
+
+                card.addEventListener('click', (e) => {
+                    const target = e.target;
+                    const trooperId = trooper.id;
+
+                    if (target.closest('.grit-flame-icon')) {
+                        if (trooper.deploymentStatus !== 'Dead') {
+                            trooper.grit = trooper.grit === 1 ? 0 : 1;
+                            updateGritVisuals(trooperId, trooper.grit);
+                        }
+                    } else if (target.closest('.ammo-button')) {
+                         if (trooper.deploymentStatus !== 'Dead') {
+                            const value = parseInt(target.closest('.ammo-button').dataset.ammoValue);
+                            const currentAmmo = trooper.ammo;
+                            const newAmmo = (currentAmmo === value) ? 0 : value;
+                            updateAmmoVisuals(trooperId, newAmmo);
+                        }
+                    } else if (target.closest('.status-bar')) {
+                        const statuses = ['OK', 'Grazed', 'Wounded', 'Bleeding Out', 'Dead'];
+                        const currentIndex = statuses.indexOf(trooper.combatStatus);
+                        const nextIndex = (currentIndex + 1) % statuses.length;
+                        updateStatusVisuals(trooperId, statuses[nextIndex]);
+                    } else if (target.closest('.heal-btn')) {
+                        const statuses = ['OK', 'Grazed', 'Wounded', 'Bleeding Out', 'Dead'];
+                        const currentIndex = statuses.indexOf(trooper.combatStatus);
+                        if (currentIndex > 0 && currentIndex < 4) {
+                            const nextIndex = currentIndex - 1;
+                            updateStatusVisuals(trooperId, statuses[nextIndex]);
+                        }
+                    } else if (target.closest('.delete-trooper-btn')) {
+                        showDeleteTrooperModal(trooper);
+                    }
+                });
+            }
+
+
+            /**
+             * Updates the title of the trooper card based on name, rank, and status.
+             */
+            function updateTrooperCardTitle(trooper) {
+                const card = document.getElementById(CSS.escape(trooper.id));
+                if (!card) return;
+
+                const titleElement = card.querySelector('.trooper-title');
+                const trooperName = trooper.name.trim();
+                const trooperRank = trooper.rank;
+                const kiaTag = trooper.deploymentStatus === 'Dead' ? ' (KIA)' : '';
+                titleElement.innerHTML = `<svg data-lucide="user-check" class="mr-2"></svg>${trooperRank} ${trooperName}${kiaTag}`;
+                lucide.createIcons();
+                renderBarracks();
+            }
+
+            // --- CORE LOGIC FUNCTIONS ---
+
+            function addTrooper(trooperData = null) {
+                const newId = `trooper-${trooperIdCounter++}`;
+                const newTrooper = {
+                    id: newId,
+                    name: trooperData ? trooperData.name : `Trooper ${trooperIdCounter}`,
+                    rank: trooperData ? trooperData.rank : 'Pvt',
+                    deploymentStatus: 'Ready',
+                    combatStatus: 'OK',
+                    grit: 1,
+                    ammo: 3,
+                    armor: 'None',
+                    specialGear: 'None',
+                    notes: trooperData ? trooperData.notes : '',
+                    intent: 'None',
+                    offensivePosition: 'Engaged',
+                    defensivePosition: 'In Cover',
+                    ammoSpentThisRound: 0,
+                    coveringTargetId: null,
+                    hardTargetId: null,
+                    didNotMoveLastRound: true,
+                    hasAbsorbedHit: false,
+                };
+                troopers.push(newTrooper);
+                displayTrooperDetails(newId);
+                updateAdvanceCalculator();
+                saveState();
+            }
+
+            function deleteTrooper(trooperId) {
+                troopers = troopers.filter(t => t.id !== trooperId);
+
+                if (selectedTrooperId === trooperId) {
+                    selectedTrooperId = null;
+                    selectedTrooperDetails.innerHTML = '<p class="text-gray-400 text-center py-10">Select a Trooper from the Barracks to view/edit details.</p>';
+                }
+
+                const engagementRow = document.getElementById(`engagement-${trooperId}`);
+                if (engagementRow) {
+                    engagementRow.remove();
+                }
+
+                renderBarracks();
+                updateRollContext();
+                updateAdvanceCalculator();
+                saveState();
+            }
+
+            // --- UI UPDATE FUNCTIONS (SYNCING STATE) ---
+
+            function updateAmmoVisuals(trooperId, newAmmoValue) {
+                const trooper = troopers.find(t => t.id === trooperId);
+                if (trooper) trooper.ammo = newAmmoValue;
+
+                const escapedId = CSS.escape(trooperId);
+
+                const mainAmmoContainer = document.querySelector(`#${escapedId} .ammo-buttons`);
+                if (mainAmmoContainer) {
+                    Array.from(mainAmmoContainer.children).forEach(button => {
+                        const buttonValue = parseInt(button.dataset.ammoValue);
+                        button.classList.toggle('selected', buttonValue <= newAmmoValue);
+                    });
+                }
+                const engagementAmmoContainer = document.getElementById(`engagement-${escapedId}-ammo-buttons`);
+                if (engagementAmmoContainer) {
+                    Array.from(engagementAmmoContainer.children).forEach(button => {
+                        const buttonValue = parseInt(button.dataset.ammoValue);
+                        button.classList.toggle('selected', buttonValue <= newAmmoValue);
+                    });
+                }
+                saveState();
+            }
+
+            function updateGritVisuals(trooperId, newGritState) {
+                const trooper = troopers.find(t => t.id === trooperId);
+                if (trooper) trooper.grit = newGritState;
+
+                const escapedId = CSS.escape(trooperId);
+                const isUsed = newGritState === 1;
+
+                const mainGritIcon = document.querySelector(`#${escapedId} .grit-flame-icon`);
+                if (mainGritIcon) mainGritIcon.classList.toggle('used', isUsed);
+
+                const engagementGritIcon = document.getElementById(`engagement-${escapedId}-grit-icon`);
+                if (engagementGritIcon) engagementGritIcon.classList.toggle('used', isUsed);
+                saveState();
+            }
+
+            function updateStatusVisuals(trooperId, newStatus) {
+                const trooper = troopers.find(t => t.id === trooperId);
+                if (!trooper) return;
+                trooper.combatStatus = newStatus;
+
+                if (newStatus === 'Dead') {
+                    trooper.deploymentStatus = 'Dead';
+                }
+
+                const isDead = trooper.deploymentStatus === 'Dead';
+                const allRowStatusClasses = ['status-row-grazed', 'status-row-wounded', 'status-row-bleeding-out', 'status-row-dead'];
+
+                if (selectedTrooperId === trooperId) {
+                    displayTrooperDetails(trooperId); // This re-renders the whole card correctly
+                }
+
+                const engagementRow = document.getElementById(CSS.escape(`engagement-${trooper.id}`));
+                if (engagementRow) {
+                    const statusSelect = engagementRow.querySelector(`.status-select`);
+                    if(statusSelect) statusSelect.value = newStatus;
+
+                    engagementRow.classList.remove(...allRowStatusClasses, 'animate-pulse-red');
+                    if (newStatus === 'Grazed') engagementRow.classList.add('status-row-grazed');
+                    if (newStatus === 'Wounded') engagementRow.classList.add('status-row-wounded');
+                    if (newStatus === 'Bleeding Out') {
+                        engagementRow.classList.add('status-row-bleeding-out', 'animate-pulse-red');
+                    }
+                    if (isDead) {
+                        engagementRow.classList.add('status-row-dead');
+                    }
+
+                    engagementRow.classList.toggle('dimmed', isDead);
+                    const engagementGritIconContainer = engagementRow.querySelector(`.grit-flame-icon`);
+                    engagementGritIconContainer.innerHTML = isDead ? `<svg data-lucide="skull" class="w-6 h-6 text-gray-400"></svg>` : `<svg data-lucide="flame" class="w-6 h-6"></svg>`;
+                    engagementRow.querySelectorAll('select:not(.status-select)').forEach(el => el.disabled = isDead);
+                }
+
+                lucide.createIcons();
+                renderBarracks();
+                updateAdvanceCalculator();
+                saveState();
+            }
+
+            function updateEngagementTrooperCard(trooper) {
+                const engagementRow = document.getElementById(CSS.escape(`engagement-${trooper.id}`));
+                if (!engagementRow) return;
+
+                engagementRow.querySelector('td:first-child').textContent = `${trooper.rank} ${trooper.name}`;
+                updateGritVisuals(trooper.id, trooper.grit);
+                updateAmmoVisuals(trooper.id, trooper.ammo);
+
+                engagementRow.querySelector(`.offensive-pos-select`).value = trooper.offensivePosition;
+                engagementRow.querySelector(`.defensive-pos-select`).value = trooper.defensivePosition;
+
+                updateRollContext();
+            }
+
+            // --- ENGAGEMENT LOGIC ---
+
+            function startEngagement() {
+                const deployedSquad = getDeployedSquad();
+                if (deployedSquad.length === 0) {
+                    showConfirmationModal("Cannot Start Engagement", "You must deploy at least one trooper to your squad before starting an engagement.", () => hideConfirmationModal());
+                    return;
+                }
+
+                startEngagementSection.classList.add('hidden');
+                activeEngagementSection.classList.remove('hidden');
+                advanceResultDisplay.innerHTML = '';
+                advanceResultDisplay.classList.add('hidden');
+                advanceRollOutcomePositions = null;
+
+                currentRound = 1;
+                currentRoundDisplay.textContent = currentRound;
+
+                deployedSquad.forEach(t => t.hasAbsorbedHit = false);
+
+                if (advanceRollOutcomePositions) {
+                    deployedSquad.forEach(trooper => {
+                        if (trooper.combatStatus !== 'Dead' && trooper.combatStatus !== 'Bleeding Out') {
+                            trooper.offensivePosition = advanceRollOutcomePositions.offensive;
+                            trooper.defensivePosition = advanceRollOutcomePositions.defensive;
+                        }
+                    });
+                    advanceRollOutcomePositions = null;
+                }
+
+                updateMomentumToWin();
+                updateCoverDescription();
+                engagementMomentum = 0;
+
+                renderEngagementMomentum();
+                renderEngagementRoster();
+                updateRollContext();
+                switchTab('engagement');
+            }
+
+            function endEngagement(outcome) {
+                activeEngagementSection.classList.add('hidden');
+                startEngagementSection.classList.remove('hidden');
+
+                hardTargets = [];
+                renderHardTargets();
+                getDeployedSquad().forEach(trooper => {
+                    if (trooper.deploymentStatus !== 'Dead') {
+                        trooper.offensivePosition = 'Engaged';
+                        trooper.defensivePosition = 'In Cover';
+                        trooper.intent = 'None';
+                        trooper.ammoSpentThisRound = 0;
+                        trooper.hardTargetId = null;
+                    }
+                });
+                saveState();
+                switchTab('mission');
+
+                if (outcome === 'win') {
+                    showCatchBreath();
+                } else if (outcome === 'retreat') {
+                    showRetreatModal();
+                }
+            }
+
+            function resolveExchange() {
+                const offenseResult = parseInt(offenseRollInput.value);
+                if (isNaN(offenseResult)) {
+                    showConfirmationModal("Input Error", "Please enter the result of your Offense Roll.", () => hideConfirmationModal());
+                    return;
+                }
+
+                if ((offenseResult === 4 || offenseResult === 5) && successAtCostChoice === null) {
+                    showConfirmationModal("Input Error", "Please choose an outcome for your Offense Roll ('Hold Position' or 'Success at Cost').", () => hideConfirmationModal());
+                    return;
+                }
+
+                const defensePenalties = new Map();
+                const hardTargetRollInputs = hardTargetRollsSection.querySelectorAll('.ht-roll-input');
+                let allHTRollsEntered = true;
+
+                hardTargetRollInputs.forEach(input => {
+                    const htId = input.dataset.htId;
+                    const htRoll = parseInt(input.value);
+                    if (isNaN(htRoll)) {
+                        allHTRollsEntered = false;
+                        return;
+                    }
+
+                    const outcome = hardTargetRollOutcomes[htId] || {};
+                    const hardTarget = hardTargets.find(ht => ht.id === htId);
+
+                    if (htRoll >= 6) {
+                        hardTarget.currentHits++;
+                    } else if (htRoll >= 4) {
+                        if (!outcome.choice) {
+                            allHTRollsEntered = false;
+                            return;
+                        }
+                        if (outcome.choice === 'cost') {
+                            hardTarget.currentHits++;
+                            const penaltyTrooperId = outcome.vulnerableTrooperId;
+                            defensePenalties.set(penaltyTrooperId, (defensePenalties.get(penaltyTrooperId) || 0) + 1);
+                        }
+                    }
+                });
+
+                if (!allHTRollsEntered) {
+                     showConfirmationModal("Input Error", "Please enter all Hard Target roll results and make any required 'cost' choices.", () => hideConfirmationModal());
+                    return;
+                }
+
+
+                let momentumChange = 0;
+                if (offenseResult <= 3) {
+                    momentumChange = -1;
+                } else if (offenseResult >= 6) {
+                    momentumChange = 1;
+                    const additionalSixesInput = document.getElementById('additionalSixesInput');
+                    if (additionalSixesInput) {
+                        const additionalSixes = parseInt(additionalSixesInput.value) || 0;
+                        momentumChange += additionalSixes;
+                    }
+                } else if (offenseResult >= 4 && successAtCostChoice === 'cost') {
+                    momentumChange = 1;
+                    const penaltyTrooperId = vulnerableTrooperId;
+                    defensePenalties.set(penaltyTrooperId, (defensePenalties.get(penaltyTrooperId) || 0) + 1);
+                }
+
+                engagementMomentum = Math.max(-3, Math.min(momentumToWin, engagementMomentum + momentumChange));
+
+                if (engagementMomentum >= momentumToWin) {
+                    endEngagement('win');
+                    return;
+                }
+                if (engagementMomentum <= -3) {
+                    endEngagement('retreat');
+                    return;
+                }
+
+                let allDefenseRollsEntered = true;
+                const injuriesThisRound = new Map();
+                getDeployedSquad().forEach(trooper => {
+                    if (trooper.combatStatus === 'Dead' || trooper.combatStatus === 'Bleeding Out') {
+                        injuriesThisRound.set(trooper.id, 0);
+                        return;
+                    }
+                    const defenseInput = document.getElementById(CSS.escape(`defense-roll-${trooper.id}`));
+                    const defenseResult = parseInt(defenseInput.value);
+
+                    if (isNaN(defenseResult)) {
+                        allDefenseRollsEntered = false;
+                        return;
+                    }
+
+                    let effectiveDefensivePosition = trooper.defensivePosition;
+                    if (trooper.intent === 'Move Up') effectiveDefensivePosition = 'Flanked';
+                    if (trooper.intent === 'Fall Back') effectiveDefensivePosition = 'In Cover';
+
+                    let injuryRange = defensivePositionDescriptions[effectiveDefensivePosition].range;
+                    if (trooper.armor === 'Heavy Armor') injuryRange--;
+
+                    let injuryAmount = 0;
+                    if (defenseResult <= injuryRange) {
+                        injuryAmount = 1;
+                        const threatLevel = parseInt(encounterDifficultySelect.value);
+
+                        if (threatLevel >= 3) {
+                            const threatRoll = rollD6();
+                            if (threatLevel === 3 && threatRoll <= 2) injuryAmount = 2;
+                            if (threatLevel === 4 && threatRoll <= 3) injuryAmount = 2;
+                        }
+
+                        if (trooper.armor === 'Medium Armor' && !trooper.hasAbsorbedHit) {
+                            injuryAmount = 0;
+                            trooper.hasAbsorbedHit = true;
+                        }
+
+                        if (injuryAmount > 0) {
+                            const statuses = ['OK', 'Grazed', 'Wounded', 'Bleeding Out', 'Dead'];
+                            const currentIndex = statuses.indexOf(trooper.combatStatus);
+                            const nextIndex = Math.min(statuses.length - 1, currentIndex + injuryAmount);
+                            trooper.combatStatus = statuses[nextIndex];
+                            if (trooper.combatStatus === 'Dead') {
+                                trooper.deploymentStatus = 'Dead';
+                            }
+                        }
+                    }
+                    injuriesThisRound.set(trooper.id, injuryAmount);
+                });
+
+                if (!allDefenseRollsEntered) {
+                    showConfirmationModal("Input Error", "Please enter all Defense Roll results for active troopers.", () => hideConfirmationModal());
+                    return;
+                }
+
+                resolveExchangeBtn.classList.add('hidden');
+                nextRoundBtn.classList.remove('hidden');
+
+                renderHardTargets();
+                renderEngagementMomentum();
+                renderBarracks();
+                renderEngagementRoster();
+                updateRollContext(injuriesThisRound, defensePenalties);
+
+                document.querySelectorAll('.roll-input').forEach(input => input.disabled = true);
+            }
+
+            function nextRound() {
+                const deployedSquad = getDeployedSquad();
+                Object.keys(movementOutcomes).forEach(trooperId => {
+                    const trooper = deployedSquad.find(t => t.id === trooperId);
+                    if (trooper) {
+                        const outcome = movementOutcomes[trooperId];
+                        if (trooper.intent === 'Move Up') {
+                            if (trooper.offensivePosition === 'Limited') trooper.offensivePosition = 'Engaged';
+                            else if (trooper.offensivePosition === 'Engaged') trooper.offensivePosition = 'Flanking';
+                            trooper.defensivePosition = outcome.position;
+                        }
+                        else if (trooper.intent === 'Fall Back') {
+                            if (trooper.defensivePosition === 'Flanked') trooper.defensivePosition = 'In Cover';
+                            else if (trooper.defensivePosition === 'In Cover') trooper.defensivePosition = 'Fortified';
+                            trooper.offensivePosition = outcome.position;
+                        }
+                    }
+                });
+
+
+                deployedSquad.forEach(trooper => {
+                    trooper.didNotMoveLastRound = !['Move Up', 'Fall Back'].includes(trooper.intent);
+                    if (trooper.ammoSpentThisRound > 0) {
+                        trooper.ammo = Math.max(0, trooper.ammo - trooper.ammoSpentThisRound);
+                    }
+                    trooper.ammoSpentThisRound = 0;
+                    trooper.intent = 'None';
+                    trooper.hardTargetId = null;
+                });
+
+                vulnerableTrooperId = null;
+                successAtCostChoice = null;
+                movementOutcomes = {};
+                hardTargetRollOutcomes = {};
+
+                currentRound++;
+                currentRoundDisplay.textContent = currentRound;
+                renderEngagementRoster();
+                updateRollContext();
+                saveState();
+
+                nextRoundBtn.classList.add('hidden');
+                resolveExchangeBtn.classList.remove('hidden');
+                offenseRollInput.value = '';
+                offenseRollInput.disabled = false;
+                successAtACostChoiceDiv.classList.add('hidden');
+                offenseRollOutcome.classList.add('hidden');
+                document.querySelectorAll('.roll-input').forEach(input => {
+                    input.disabled = false;
+                    input.value = '';
+                });
+            }
+
+            function updateMomentumToWin() {
+                const threatLevel = parseInt(encounterDifficultySelect.value);
+                momentumToWin = threatLevel + 1;
+                renderEngagementMomentum();
+                updateRollContext();
+            }
+
+            function updateCoverDescription() {
+                const selectedCover = coverConditionSelect.value;
+                coverConditionDescription.textContent = coverConditionData[selectedCover];
+            }
+
+            function renderEngagementMomentum() {
+                engagementMomentumButtons.innerHTML = '';
+                const negativeContainer = document.createElement('div');
+                negativeContainer.className = "flex justify-end items-center space-x-2";
+                const zeroContainer = document.createElement('div');
+                const positiveContainer = document.createElement('div');
+                positiveContainer.className = "flex justify-start items-center space-x-2";
+
+                for (let i = -3; i <= momentumToWin; i++) {
+                    const circle = document.createElement('div');
+                    circle.className = 'momentum-circle';
+                    if (i < 0) {
+                        circle.classList.add('negative');
+                        negativeContainer.appendChild(circle);
+                    } else if (i === 0) {
+                        circle.classList.add('neutral');
+                        zeroContainer.appendChild(circle);
+                    } else {
+                        circle.classList.add('positive');
+                        positiveContainer.appendChild(circle);
+                    }
+
+                    if (i === engagementMomentum) circle.classList.add('filled');
+                    if (i === momentumToWin) circle.classList.add('target');
+
+                    circle.dataset.momentumValue = i;
+                    circle.textContent = i;
+                    circle.addEventListener('click', () => {
+                        engagementMomentum = i;
+                        renderEngagementMomentum();
+                        updateRollContext();
+                    });
+                }
+                engagementMomentumButtons.appendChild(negativeContainer);
+                engagementMomentumButtons.appendChild(zeroContainer);
+                engagementMomentumButtons.appendChild(positiveContainer);
+            }
+
+            function renderEngagementRoster() {
+                engagementTroopersContainer.innerHTML = '';
+                targetHeaderCol.classList.toggle('hidden', hardTargets.length === 0);
+
+                getDeployedSquad().forEach(trooper => {
+                    const row = document.createElement('tr');
+                    row.id = CSS.escape(`engagement-${trooper.id}`);
+
+                    const isDead = trooper.deploymentStatus === 'Dead';
+                    const disabledAttribute = isDead ? 'disabled' : '';
+
+                    let intentOptions = ['None', 'Fire', 'Covering Fire', 'Move Up', 'Fall Back', 'Interact', 'Improvise'];
+                    if (hardTargets.length > 0) {
+                        intentOptions.splice(2, 0, 'Fire (Hard Target)');
+                    }
+                    const intentOptionsHtml = intentOptions.map(opt => `<option value="${opt}" ${trooper.intent === opt ? 'selected' : ''}>${opt}</option>`).join('');
+
+                    const offensivePosOptions = Object.keys(offensivePositionDescriptions).map(opt => `<option value="${opt}" ${trooper.offensivePosition === opt ? 'selected' : ''}>${opt}</option>`).join('');
+                    const defensivePosOptions = Object.keys(defensivePositionDescriptions).map(opt => `<option value="${opt}" ${trooper.defensivePosition === opt ? 'selected' : ''}>${opt}</option>`).join('');
+                    const statusOptions = ['OK', 'Grazed', 'Wounded', 'Bleeding Out', 'Dead'].map(opt => `<option value="${opt}" ${trooper.combatStatus === opt ? 'selected' : ''}>${opt}</option>`).join('');
+
+                    const gritUsedClass = trooper.grit === 1 ? 'used' : '';
+                    const ammoButtonsHtml = [1, 2, 3].map(val => `<div class="ammo-button ${trooper.ammo >= val ? 'selected' : ''}" data-ammo-value="${val}"></div>`).join('');
+                    const gritIconHtml = isDead ? `<svg data-lucide="skull" class="w-6 h-6 text-gray-400"></svg>` : `<svg data-lucide="flame" class="w-6 h-6"></svg>`;
+
+                    let ammoSpentOptions = '';
+                    for(let i = 0; i <= trooper.ammo; i++) {
+                        ammoSpentOptions += `<option value="${i}" ${trooper.ammoSpentThisRound === i ? 'selected' : ''}>${i}</option>`;
+                    }
+
+                    let targetOptions = '<option value="null">-- Select --</option>';
+                    hardTargets.forEach(ht => {
+                        targetOptions += `<option value="${ht.id}" ${trooper.hardTargetId === ht.id ? 'selected' : ''}>${ht.name}</option>`;
+                    });
+
+                    row.innerHTML = `
+                        <td>${trooper.rank} ${trooper.name}</td>
+                        <td><select class="w-full styled-select status-select">${statusOptions}</select></td>
+                        <td class="flex justify-center items-center h-full"><div class="grit-flame-icon ${gritUsedClass}">${gritIconHtml}</div></td>
+                        <td><div id="engagement-${CSS.escape(trooper.id)}-ammo-buttons" class="flex space-x-1 items-center justify-center">${ammoButtonsHtml}</div></td>
+                        <td><select class="w-full styled-select intent-select" ${disabledAttribute}>${intentOptionsHtml}</select></td>
+                        <td class="ammo-spent-col"><select class="w-full styled-select ammo-spent-select" ${disabledAttribute}>${ammoSpentOptions}</select></td>
+                        <td class="target-cell ${hardTargets.length === 0 ? 'hidden' : ''}"><select class="w-full styled-select target-select" ${trooper.intent !== 'Fire (Hard Target)' ? 'disabled' : ''}>${targetOptions}</select></td>
+                        <td><select class="w-full styled-select offensive-pos-select" ${disabledAttribute}>${offensivePosOptions}</select></td>
+                        <td><select class="w-full styled-select defensive-pos-select" ${disabledAttribute}>${defensivePosOptions}</select></td>
+                    `;
+
+                    engagementTroopersContainer.appendChild(row);
+                    updateStatusVisuals(trooper.id, trooper.combatStatus);
+                });
+                lucide.createIcons();
+            }
+
+
+            function updateRollContext(injuriesMap = null, defensePenalties = new Map()) {
+                if (activeEngagementSection.classList.contains('hidden')) return;
+
+                let offenseSources = [];
+                let defenseHtml = '';
+                let movementHtml = '';
+                let hardTargetRolls = {};
+
+                let fireActionsCount = 0;
+                let fireActionDice = 0;
+
+                const isExchangeResolved = nextRoundBtn.classList.contains('hidden') === false;
+
+                const deployedSquad = getDeployedSquad();
+                const coverers = deployedSquad.filter(t => t.deploymentStatus !== 'Dead' && t.combatStatus !== 'Bleeding Out' && t.intent === 'Covering Fire');
+                const movingTroopers = deployedSquad.filter(t => t.deploymentStatus !== 'Dead' && t.combatStatus !== 'Bleeding Out' && ['Move Up', 'Fall Back'].includes(t.intent));
+
+                deployedSquad.forEach(trooper => {
+                    if (trooper.deploymentStatus === 'Dead' || trooper.combatStatus === 'Bleeding Out') return;
+
+                    if (trooper.intent === 'Fire') {
+                        fireActionsCount++;
+                        fireActionDice++;
+                        if (trooper.offensivePosition === 'Flanking') fireActionDice++;
+                        if (trooper.offensivePosition === 'Limited') fireActionDice--;
+                        if (trooper.specialGear === 'Sniper Rifle' && trooper.defensivePosition === 'Fortified') {
+                            offenseSources.push({ name: trooper.name, reason: 'Sniper Gear', dice: trooper.didNotMoveLastRound ? 2 : 1 });
+                        }
+                        if (trooper.ammoSpentThisRound > 0) offenseSources.push({ name: trooper.name, reason: 'Ammo', dice: trooper.ammoSpentThisRound });
+                    }
+
+                    if (trooper.intent === 'Fire (Hard Target)' && trooper.hardTargetId) {
+                        if (!hardTargetRolls[trooper.hardTargetId]) {
+                            const ht = hardTargets.find(ht => ht.id === trooper.hardTargetId);
+                            if (ht) {
+                                hardTargetRolls[trooper.hardTargetId] = { name: ht.name, sources: [], totalDice: 0 };
+                            }
+                        }
+                        if (hardTargetRolls[trooper.hardTargetId]) {
+                            let htDice = 1 + trooper.ammoSpentThisRound;
+                            hardTargetRolls[trooper.hardTargetId].sources.push({ name: trooper.name, dice: htDice });
+                            hardTargetRolls[trooper.hardTargetId].totalDice += htDice;
+                        }
+                    }
+
+
+                    let defenseDice = 1;
+                    const isVulnerableIntent = ['Move Up', 'Fall Back', 'Interact'].includes(trooper.intent);
+                    if (isVulnerableIntent) {
+                       coverers.forEach(coverer => {
+                           defenseDice++;
+                           if(coverer.specialGear === 'LMG') {
+                               defenseDice++;
+                           }
+                       });
+                    }
+
+                    if (defensePenalties.has(trooper.id)) {
+                        defenseDice -= defensePenalties.get(trooper.id);
+                    }
+
+                    let effectiveDefensivePosition = trooper.defensivePosition;
+                    let positionDisplay = `<span class="font-semibold ${defensivePositionDescriptions[trooper.defensivePosition].className}">${trooper.defensivePosition}</span>`;
+                    if (trooper.intent === 'Move Up') {
+                        effectiveDefensivePosition = 'Flanked';
+                        positionDisplay = `<span class="font-semibold pos-moving-up">Moving Up</span>`;
+                    }
+                    if (trooper.intent === 'Fall Back') {
+                        effectiveDefensivePosition = 'In Cover';
+                        positionDisplay = `<span class="font-semibold pos-falling-back">Falling Back</span>`;
+                    }
+
+                    const injuryText = defensivePositionDescriptions[effectiveDefensivePosition].text || 'Unknown';
+                    let hardTargetBonusText = '';
+                    const targetingHardTarget = hardTargets.find(ht => ht.targetedTrooperId === trooper.id);
+                    if(targetingHardTarget) {
+                        defenseDice--;
+                        hardTargetBonusText = `<span class="text-red-400">(Targeted by ${targetingHardTarget.name})</span>`;
+                    }
+
+                    const injuryResultHtml = (isExchangeResolved && injuriesMap) ? `<p class="text-sm font-bold text-red-400 text-right">${injuriesMap.get(trooper.id) || 0} Injuries</p>` : `<input type="number" id="defense-roll-${CSS.escape(trooper.id)}" min="1" max="6" class="roll-input block w-16 bg-gray-700 border border-gray-500 rounded-md shadow-sm py-1 px-2 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Roll">`;
+
+                    defenseHtml += `
+                        <li class="grid grid-cols-[1fr_auto] gap-2 items-center">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <strong class="text-gray-300">${trooper.name}:</strong>
+                                    ${positionDisplay}
+                                </div>
+                                <span class="text-xs text-gray-400">Roll ${Math.max(0, defenseDice)}d6, ${injuryText} ${hardTargetBonusText}</span>
+                            </div>
+                            ${injuryResultHtml}
+                        </li>
+                    `;
+                });
+
+                if (movingTroopers.length > 0) {
+                    movementHtml = movingTroopers.map(trooper => {
+                        let ruleText = '';
+                        if (trooper.intent === 'Move Up') {
+                            ruleText = `Roll 1d6 for new Defense.`;
+                        } else if (trooper.intent === 'Fall Back') {
+                            ruleText = `Roll 1d6 for new Offense.`;
+                        }
+                        const moveRollInputHtml = isExchangeResolved ? '' : `<input type="number" id="move-roll-${CSS.escape(trooper.id)}" min="1" max="6" class="roll-input block w-16 bg-gray-700 border border-gray-500 rounded-md shadow-sm py-1 px-2 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Roll">`;
+                        const moveResultHtml = isExchangeResolved && movementOutcomes[trooper.id] ? `<p class="text-xs text-green-400 font-semibold col-span-2 text-right">→ New Position: ${movementOutcomes[trooper.id].position}</p>` : '';
+
+                        return `
+                            <li class="grid grid-cols-[1fr_auto] gap-2 items-center">
+                                <div>
+                                    <strong class="text-gray-300">${trooper.name} (${trooper.intent})</strong>
+                                    <p class="text-xs text-gray-400">${ruleText}</p>
+                                </div>
+                                ${moveRollInputHtml}
+                                ${moveResultHtml}
+                            </li>
+                        `;
+                    }).join('');
+                } else {
+                    movementHtml = `<p class="text-center text-gray-400 text-sm">No Troopers moving this Exchange.</p>`;
+                }
+
+                if (fireActionsCount > 0) {
+                    offenseSources.unshift({ name: `${fireActionsCount} Trooper(s)`, reason: 'Fire', dice: fireActionDice });
+                }
+
+                const totalOffenseDice = offenseSources.reduce((sum, source) => sum + source.dice, 0);
+                offenseRollContext.innerHTML = `<span class="text-2xl font-bold text-white">Roll ${Math.max(0, totalOffenseDice)}d6</span>`;
+                offenseRollBreakdown.innerHTML = offenseSources.map(s => `<li>${s.name} ${s.reason}: ${s.dice > 0 ? '+' : ''}${s.dice}d6</li>`).join('');
+
+                defenseRollList.innerHTML = defenseHtml || '<li>No active troopers.</li>';
+                movementRollList.innerHTML = movementHtml;
+
+                hardTargetRollsSection.innerHTML = '';
+                if (Object.keys(hardTargetRolls).length > 0) {
+                    let htRollsHtml = '';
+                    for (const htId in hardTargetRolls) {
+                        const htData = hardTargetRolls[htId];
+                        const activeTroopers = getDeployedSquad().filter(t => t.deploymentStatus !== 'Dead' && t.combatStatus !== 'Bleeding Out');
+                        let vulnerableOptions = '';
+                        if (activeTroopers.length > 0) {
+                             vulnerableOptions = activeTroopers.map(trooper => `<option value="${trooper.id}">${trooper.name}</option>`).join('');
+                        }
+
+                        htRollsHtml += `
+                        <div class="ht-roll-container" data-ht-id="${htId}">
+                            <h5 class="text-md font-semibold text-yellow-300">vs. ${htData.name} (Roll ${htData.totalDice}d6)</h5>
+                            <div class="mt-1">
+                                <label class="block text-sm font-medium text-gray-300">Enter Highest d6 Result:</label>
+                                <input type="number" data-ht-id="${htId}" min="1" max="6" class="ht-roll-input roll-input mt-1 block w-full bg-gray-800 border-gray-600 rounded-md py-1 px-2 text-white">
+                            </div>
+                            <div class="ht-cost-choice hidden mt-2 text-center bg-yellow-900/50 p-2 rounded-md">
+                                <p class="text-xs text-gray-400 mb-2">Roll of <span class="ht-cost-roll-value"></span> allows a choice.</p>
+                                <div class="flex justify-center gap-2">
+                                    <button class="ht-hold-btn bg-gray-500 hover:bg-gray-400 text-gray-900 text-xs py-1 px-2 rounded-full btn-primary">Hold</button>
+                                    <button class="ht-cost-btn bg-yellow-600 hover:bg-yellow-700 text-white text-xs py-1 px-2 rounded-full btn-primary">Hit at Cost</button>
+                                </div>
+                                <div class="ht-cost-trooper-selection flex items-center gap-2 mt-2 hidden">
+                                    <select class="ht-vulnerable-select styled-select flex-grow text-xs">${vulnerableOptions}</select>
+                                </div>
+                            </div>
+                            <div class="ht-roll-outcome hidden mt-2 text-center bg-gray-900 p-2 rounded-md text-sm"></div>
+                        </div>
+                        `;
+                    }
+                    hardTargetRollsSection.innerHTML = htRollsHtml;
+                }
+
+
+                movingTroopers.forEach(trooper => {
+                    const moveRollInput = document.getElementById(CSS.escape(`move-roll-${trooper.id}`));
+                    if (moveRollInput) {
+                        moveRollInput.addEventListener('input', (e) => {
+                            const roll = parseInt(e.target.value);
+                            if (roll >= 1 && roll <= 6) {
+                                let newPosition = '';
+                                if (trooper.intent === 'Move Up') {
+                                    newPosition = (roll <= 4) ? 'Flanked' : 'In Cover';
+                                    movementOutcomes[trooper.id] = { type: 'defensive', position: newPosition };
+                                } else {
+                                    newPosition = (roll <= 4) ? 'Limited' : 'Engaged';
+                                    movementOutcomes[trooper.id] = { type: 'offensive', position: newPosition };
+                                }
+                            } else {
+                                delete movementOutcomes[trooper.id];
+                            }
+                        });
+                    }
+                });
+
+                lucide.createIcons();
+            }
+
+            function toggleCollapsible(content, icon) {
+                content.classList.toggle('expanded');
+                icon.classList.toggle('rotate-180');
+            }
+
+            // --- HARD TARGET FUNCTIONS ---
+            function addHardTarget() {
+                const newId = `ht-${hardTargetIdCounter++}`;
+                const newHardTarget = {
+                    id: newId,
+                    name: `Target ${hardTargetIdCounter}`,
+                    hits: 2,
+                    currentHits: 0,
+                    targetedTrooperId: null
+                };
+                hardTargets.push(newHardTarget);
+                renderHardTargets();
+                renderEngagementRoster();
+                updateRollContext();
+                saveState();
+            }
+
+            function deleteHardTarget(id) {
+                hardTargets = hardTargets.filter(ht => ht.id !== id);
+
+                troopers.forEach(trooper => {
+                    if (trooper.hardTargetId === id) {
+                        trooper.hardTargetId = null;
+                    }
+                });
+
+                renderHardTargets();
+                renderEngagementRoster();
+                updateRollContext();
+                saveState();
+            }
+
+            function renderHardTargets() {
+                hardTargetsContainer.innerHTML = '';
+                if (hardTargets.length === 0) {
+                    hardTargetsContainer.innerHTML = '<p class="text-sm text-gray-400 text-center">No hard targets on the field.</p>';
+                    return;
+                }
+                hardTargets.forEach(ht => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-700 p-2 rounded-md';
+                    card.dataset.htId = ht.id;
+
+                    let pipsHtml = '';
+                    for(let i = 1; i <= ht.hits; i++) {
+                        pipsHtml += `<div class="hit-pip ${i <= ht.currentHits ? 'hit' : ''}" data-pip-index="${i}"></div>`;
+                    }
+
+                    const activeTroopers = getDeployedSquad().filter(t => t.deploymentStatus !== 'Dead' && t.combatStatus !== 'Bleeding Out');
+                    let targetOptions = `<option value="null" ${ht.targetedTrooperId === null ? 'selected' : ''}>None</option>`;
+                    targetOptions += activeTroopers.map(t => `<option value="${t.id}" ${ht.targetedTrooperId === t.id ? 'selected' : ''}>${t.name}</option>`).join('');
+
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between mb-2">
+                            <input type="text" value="${ht.name}" class="ht-name-input bg-transparent text-white w-2/4 focus:outline-none focus:bg-gray-800 rounded px-1">
+                            <div class="flex gap-2">${pipsHtml}</div>
+                            <button class="delete-ht-btn text-gray-400 hover:text-red-500">
+                                <svg data-lucide="x-circle" class="w-5 h-5"></svg>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg data-lucide="crosshair" class="w-5 h-5 text-gray-400"></svg>
+                            <select class="ht-target-select w-full text-sm styled-select">${targetOptions}</select>
+                            <button class="random-target-btn bg-gray-500 hover:bg-gray-400 text-gray-900 font-bold p-2 rounded-full btn-primary">
+                                <svg data-lucide="dices" class="w-5 h-5"></svg>
+                            </button>
+                        </div>
+                    `;
+                    hardTargetsContainer.appendChild(card);
+                });
+
+                lucide.createIcons();
+            }
+
+            function selectRandomHardTargetTarget(hardTarget) {
+                const activeTroopers = getDeployedSquad().filter(t => t.deploymentStatus !== 'Dead' && t.combatStatus !== 'Bleeding Out');
+                if (activeTroopers.length === 0) return;
+
+                const movingTroopers = activeTroopers.filter(t => ['Move Up', 'Fall Back', 'Interact'].includes(t.intent));
+                const flankedTroopers = activeTroopers.filter(t => t.defensivePosition === 'Flanked');
+
+                let preferredTargets = [];
+                if (movingTroopers.length > 0) {
+                    preferredTargets = movingTroopers;
+                } else if (flankedTroopers.length > 0) {
+                    preferredTargets = flankedTroopers;
+                } else {
+                    preferredTargets = activeTroopers;
+                }
+
+                const randomTarget = preferredTargets[Math.floor(Math.random() * preferredTargets.length)];
+                hardTarget.targetedTrooperId = randomTarget.id;
+
+                renderHardTargets();
+                updateRollContext();
+                saveState();
+            }
+
+            // --- MISSION PHASE & SECTOR FUNCTIONS ---
+            function addSector() {
+                const newId = `sector-${sectorIdCounter++}`;
+                const newSector = {
+                    id: newId,
+                    name: `Sector ${sectorIdCounter}`,
+                    cover: 'Normal',
+                    content: 'Threat',
+                    threatLevel: 1,
+                    boonDescription: '',
+                    isLZ: sectors.length === 0,
+                    isEZ: false
+                };
+                sectors.push(newSector);
+                if (sectors.length === 1) {
+                    moveSquadToSector(newId, true);
+                }
+                renderSectors();
+                saveState();
+            }
+
+            function deleteSector(sectorId) {
+                sectors = sectors.filter(s => s.id !== sectorId);
+                if (squadSectorId === sectorId) {
+                    squadSectorId = sectors.length > 0 ? sectors[0].id : null;
+                }
+                renderSectors();
+                saveState();
+            }
+
+            function moveSquadToSector(sectorId, isInitial = false) {
+                squadSectorId = sectorId;
+                if (!isInitial) {
+                    sectorHistory.push(sectorId);
+                } else {
+                    sectorHistory = [sectorId];
+                }
+                const currentSector = sectors.find(s => s.id === squadSectorId);
+                if (currentSector && currentSector.content === 'Threat') {
+                    targetThreatSelect.value = currentSector.threatLevel;
+                }
+                advanceResultDisplay.innerHTML = '';
+                advanceResultDisplay.classList.add('hidden');
+                advanceRollOutcomePositions = null;
+                renderSectors();
+                saveState();
+            }
+
+            function renderSectors() {
+                sectorList.innerHTML = '';
+                if (sectors.length === 0) {
+                    sectorList.innerHTML = '<p class="text-sm text-gray-400 text-center">No sectors defined for this mission.</p>';
+                    return;
+                }
+                sectors.forEach(sector => {
+                    const card = document.createElement('div');
+                    card.id = sector.id;
+                    card.dataset.sectorId = sector.id;
+                    let cardClasses = 'sector-card bg-gray-700 p-3 rounded-md border-l-4 transition-colors w-full';
+                    if (sector.id === squadSectorId) cardClasses += ' current-sector';
+                    if (sector.isLZ) cardClasses += ' is-lz';
+                    if (sector.isEZ) cardClasses += ' is-ez';
+                    card.className = cardClasses;
+
+                    const maxThreat = maxThreatMap[missionDifficultySelect.value];
+                    let threatLevelOptions = '';
+                    for (let i = 1; i <= maxThreat; i++) {
+                        threatLevelOptions += `<option value="${i}" ${sector.threatLevel == i ? 'selected' : ''}>Level ${i}</option>`;
+                    }
+
+                    let footerHtml = '';
+                    if (sector.id === squadSectorId) {
+                        if (sector.content === 'Threat') {
+                            footerHtml = `<p class="text-sm text-red-400 mt-3 font-semibold">Make an Advance! roll</p>`;
+                        } else {
+                            footerHtml = `<p class="text-sm text-green-400 mt-3 font-semibold">Advance! to next Sector or Catch Breath</p>`;
+                        }
+                    } else {
+                        footerHtml = `<button class="move-squad-btn mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded-full btn-primary text-xs flex items-center justify-center">
+                            <svg data-lucide="move" class="mr-1 w-4 h-4"></svg>Move Squad Here
+                        </button>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <input type="text" value="${sector.name}" class="sector-name-input bg-transparent text-white font-semibold w-2/3 focus:outline-none focus:bg-gray-800 rounded px-1">
+                            <div class="flex items-center gap-1">
+                                <button title="Set as Landing Zone" class="lz-btn text-gray-400 hover:text-blue-400 ${sector.isLZ ? 'text-blue-400' : ''}"><svg data-lucide="arrow-down-to-line" class="w-5 h-5"></svg></button>
+                                <button title="Set as Extraction Zone" class="ez-btn text-gray-400 hover:text-green-400 ${sector.isEZ ? 'text-green-400' : ''}"><svg data-lucide="arrow-up-from-line" class="w-5 h-5"></svg></button>
+                                <button class="delete-sector-btn text-gray-400 hover:text-red-500"><svg data-lucide="x-circle" class="w-5 h-5"></svg></button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <label class="block text-xs text-gray-400">Cover</label>
+                                <select class="sector-cover-select styled-select w-full text-xs p-1">
+                                    <option value="Open" ${sector.cover === 'Open' ? 'selected' : ''}>Open</option>
+                                    <option value="Normal" ${sector.cover === 'Normal' ? 'selected' : ''}>Normal</option>
+                                    <option value="Dense" ${sector.cover === 'Dense' ? 'selected' : ''}>Dense</option>
+                                </select>
+                            </div>
+                             <div>
+                                <label class="block text-xs text-gray-400">Content</label>
+                                <select class="sector-content-select styled-select w-full text-xs p-1">
+                                    <option value="Threat" ${sector.content === 'Threat' ? 'selected' : ''}>Threat</option>
+                                    <option value="Empty" ${sector.content === 'Empty' ? 'selected' : ''}>Empty</option>
+                                    <option value="Boon" ${sector.content === 'Boon' ? 'selected' : ''}>Boon</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="threat-level-container ${sector.content !== 'Threat' ? 'hidden' : ''} mt-2">
+                            <label class="block text-xs text-gray-400">Threat Level</label>
+                            <select class="sector-threat-level-select styled-select w-full text-xs p-1">${threatLevelOptions}</select>
+                        </div>
+                        <div class="boon-container ${sector.content !== 'Boon' ? 'hidden' : ''} mt-2">
+                            <textarea class="boon-description-input styled-select w-full text-xs p-1" rows="2" placeholder="Describe the boon...">${sector.boonDescription}</textarea>
+                        </div>
+                        ${footerHtml}
+                    `;
+                    sectorList.appendChild(card);
+                });
+
+                lucide.createIcons();
+            }
+
+            function updateAdvanceCalculator() {
+                const deployedSquad = getDeployedSquad();
+                const woundedCount = deployedSquad.filter(t => t.combatStatus === 'Wounded').length;
+                let injuriesMod = 0;
+                let injuriesSource = '';
+                if (woundedCount >= 3) {
+                    injuriesMod = -2;
+                    injuriesSource = `(${woundedCount} Wounded)`;
+                } else if (woundedCount > 0) {
+                    injuriesMod = -1;
+                    injuriesSource = `(${woundedCount} Wounded)`;
+                }
+                injuriesModifierSpan.textContent = injuriesMod;
+                injuriesModifierSource.textContent = injuriesSource;
+
+                let mobilityMod = 0;
+                let mobilitySource = '';
+                if (deployedSquad.length > 0) {
+                    if (deployedSquad.some(t => t.armor === 'Heavy Armor')) {
+                        mobilityMod = -1;
+                        mobilitySource = '(Heavy Armor)';
+                    } else if (deployedSquad.every(t => t.armor === 'Light Armor')) {
+                        mobilityMod = 1;
+                        mobilitySource = '(All Light Armor)';
+                    }
+                }
+                mobilityModifierSpan.textContent = mobilityMod;
+                mobilityModifierSource.textContent = mobilitySource;
+
+                const fatigueMod = parseInt(fatigueModifierInput.value) || 0;
+                const weatherMod = parseInt(weatherModifierSelect.value) || 0;
+
+                const totalMod = injuriesMod + mobilityMod + fatigueMod + weatherMod;
+                totalModifierSpan.textContent = totalMod;
+            }
+
+            function calculateAdvance() {
+                const diceRoll = parseInt(advanceDiceRollInput.value);
+                if (isNaN(diceRoll) || diceRoll < 2 || diceRoll > 6) {
+                    showConfirmationModal("Input Error", "Please enter a valid 2d3 roll (a number between 2 and 6).", () => hideConfirmationModal());
+                    return;
+                }
+
+                const existingStartBtn = advanceResultDisplay.querySelector('#startEngagementBtnFromAdvance');
+                if(existingStartBtn) existingStartBtn.remove();
+
+                const totalMod = parseInt(totalModifierSpan.textContent);
+                const finalRoll = Math.max(2, Math.min(6, diceRoll + totalMod));
+
+                const threatLevel = parseInt(targetThreatSelect.value);
+                const resultKey = advanceRollTable[threatLevel][finalRoll];
+                const outcome = advanceRollOutcomes[resultKey];
+
+                advanceResultDisplay.innerHTML = `
+                    <p class="text-lg font-bold">Result: <span class="text-yellow-400">${resultKey}</span></p>
+                    <p class="text-sm">${outcome.text}</p>
+                `;
+
+                if (outcome.positions) {
+                    advanceRollOutcomePositions = outcome.positions;
+                    const newStartBtn = startEngagementBtn.cloneNode(true);
+                    newStartBtn.classList.remove('hidden');
+                    newStartBtn.id = 'startEngagementBtnFromAdvance';
+                    newStartBtn.addEventListener('click', startEngagement);
+                    advanceResultDisplay.appendChild(newStartBtn);
+                    lucide.createIcons();
+                } else {
+                    advanceRollOutcomePositions = null;
+                }
+
+                advanceResultDisplay.classList.remove('hidden');
+
+                advanceRollsMade++;
+                updateFatigueCounter();
+                saveState();
+            }
+
+            function updateFatigueCounter() {
+                fatigueModifierInput.value = -Math.floor(advanceRollsMade / 3);
+                advanceRollsMadeSpan.textContent = advanceRollsMade;
+                updateAdvanceCalculator();
+            }
+
+            function resetFatigue() {
+                advanceRollsMade = 0;
+                updateFatigueCounter();
+                saveState();
+            }
+
+            function toggleBriefingLock(lock) {
+                isBriefingLocked = lock;
+                missionStatus = lock ? 'InProgress' : 'Briefing';
+
+                if (lock) {
+                    summarySquadName.textContent = squadNameInput.value || "Unnamed Squad";
+                    summaryMissionName.textContent = missionNameInput.value || "Unnamed Mission";
+                    summaryDifficulty.textContent = missionDifficultySelect.value;
+                    summaryObjectiveDetails.textContent = objectiveDetailsInput.value || "None";
+                    summaryNotes.textContent = missionNotesTextarea.value || "None";
+
+                    const missionType = missionTypeSelect.value;
+                    summaryMissionTypeTag.textContent = missionType;
+                    if (missionType === 'Hit & Run') {
+                        summaryExtractionZone.textContent = extractionZoneInput.value || "Not specified";
+                        summaryEZContainer.classList.remove('hidden');
+                    } else {
+                        summaryEZContainer.classList.add('hidden');
+                    }
+                }
+                
+                updateUIForMissionStatus();
+                saveState();
+            }
+
+            function updateUIForMissionStatus() {
+                const isBriefing = missionStatus === 'Briefing';
+
+                // Control visibility of briefing vs. summary
+                missionBriefingSection.classList.toggle('hidden', !isBriefing);
+                missionSummaryCard.classList.toggle('hidden', isBriefing);
+
+                // Disable/enable briefing inputs
+                const briefingInputs = missionBriefingSection.querySelectorAll('input, select, textarea');
+                briefingInputs.forEach(input => input.disabled = !isBriefing);
+
+                // Control visibility of the Mission Tracker
+                missionTrackerContainer.classList.toggle('dimmed', isBriefing);
+                const trackerInputs = missionTrackerContainer.querySelectorAll('input, select, button');
+                trackerInputs.forEach(input => input.disabled = isBriefing);
+                
+                // Control visibility of the End Mission button
+                endMissionBtn.classList.toggle('hidden', !isBriefingLocked);
+
+                // Re-render barracks to show/hide deploy buttons
+                renderBarracks();
+            }
+
+            function showCatchBreath() {
+                catchBreathSection.classList.remove('hidden');
+                catchBreathTrooperList.innerHTML = ''; // Clear previous
+                const deployedSquad = getDeployedSquad();
+                const medics = deployedSquad.filter(t => t.specialGear === 'Medic Gear' && t.deploymentStatus !== 'Dead' && t.ammo > 0);
+                const wounded = deployedSquad.filter(t => t.combatStatus === 'Wounded');
+
+                if (medics.length === 0 || wounded.length === 0) {
+                     catchBreathTrooperList.innerHTML = '<p class="text-center text-gray-400">No available medics or no one is Wounded.</p>';
+                     return;
+                }
+
+                function startDebriefing() {
+                missionStatus = 'Debriefing';
+                debriefingModal.classList.remove('hidden');
+                setTimeout(() => debriefingModal.classList.remove('opacity-0'), 10);
+            }
+
+            function hideDebriefingModal() {
+                debriefingModal.classList.add('opacity-0');
+                setTimeout(() => debriefingModal.classList.add('hidden'), 300);
+            }
+
+            function processMissionEnd(wasSuccessful) {
+                const deployedSquad = getDeployedSquad();
+                deployedSquad.forEach(trooper => {
+                    if (trooper.deploymentStatus === 'Dead') return;
+
+                    // Check for recovery condition
+                    if (trooper.combatStatus === 'Wounded' || trooper.combatStatus === 'Bleeding Out') {
+                        trooper.deploymentStatus = 'Recovering';
+                    } else {
+                        trooper.deploymentStatus = 'Ready';
+                    }
+                    // Reset combat status for next mission
+                    trooper.combatStatus = 'OK';
+                });
+
+                // Reset mission parameters for the next one
+                sectors = [];
+                sectorHistory = [];
+                squadSectorId = null;
+                advanceRollsMade = 0;
+                resetFatigue();
+                
+                toggleBriefingLock(false); // This also sets missionStatus back to 'Briefing'
+                hideDebriefingModal();
+            }
+
+                medics.forEach(medic => {
+                    const medicDiv = document.createElement('div');
+                    medicDiv.className = 'bg-gray-800 p-3 rounded-md';
+                    medicDiv.innerHTML = `<h4 class="font-semibold text-green-400">${medic.name} (Medic) - ${medic.ammo} Supplies</h4>`;
+
+                    const targetList = document.createElement('ul');
+                    targetList.className = 'mt-2 space-y-2';
+
+                    wounded.forEach(patient => {
+                        const patientItem = document.createElement('li');
+                        patientItem.className = 'flex justify-between items-center';
+                        patientItem.innerHTML = `<span>${patient.name} (Wounded)</span>`;
+                        const healBtn = document.createElement('button');
+                        healBtn.className = 'bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded-full btn-primary';
+                        healBtn.innerHTML = `<svg data-lucide="plus" class="inline w-4 h-4 mr-1"></svg>Heal (1 Supply)`;
+                        healBtn.addEventListener('click', () => {
+                            medic.ammo--;
+                            patient.combatStatus = 'Grazed';
+                            updateStatusVisuals(patient.id, 'Grazed');
+                            updateAmmoVisuals(medic.id, medic.ammo);
+                            showCatchBreath(); // Re-render the UI
+                        });
+                        patientItem.appendChild(healBtn);
+                        targetList.appendChild(patientItem);
+                    });
+                    medicDiv.appendChild(targetList);
+                    catchBreathTrooperList.appendChild(medicDiv);
+                });
+                lucide.createIcons();
+            }
+
+
+            // --- DATA PERSISTENCE ---
+            function saveState() {
+                const state = {
+                    troopers: troopers,
+                    hardTargets: hardTargets,
+                    sectors: sectors,
+                    sectorHistory: sectorHistory,
+                    trooperIdCounter: trooperIdCounter,
+                    hardTargetIdCounter: hardTargetIdCounter,
+                    sectorIdCounter: sectorIdCounter,
+                    squadSectorId: squadSectorId,
+                    advanceRollsMade: advanceRollsMade,
+                    isBriefingLocked: isBriefingLocked,
+                    missionStatus: missionStatus,
+                    missionDetails: {
+                        squadName: squadNameInput.value,
+                        missionName: missionNameInput.value,
+                        missionDifficulty: missionDifficultySelect.value,
+                        missionType: missionTypeSelect.value,
+                        objectiveDetails: objectiveDetailsInput.value,
+                        extractionZone: extractionZoneInput.value,
+                        missionNotes: missionNotesTextarea.value
+                    }
+                };
+                localStorage.setItem('dangerCloseTrackerState', JSON.stringify(state));
+            }
+
+            function loadState() {
+                const savedState = localStorage.getItem('dangerCloseTrackerState');
+                if (savedState) {
+                    try {
+                        const state = JSON.parse(savedState);
+                        validateStateSchema(state);
+                        troopers = state.troopers || [];
+                        hardTargets = state.hardTargets || [];
+                        sectors = state.sectors || [];
+                        sectorHistory = state.sectorHistory || [];
+                        trooperIdCounter = state.trooperIdCounter || 0;
+                        hardTargetIdCounter = state.hardTargetIdCounter || 0;
+                        sectorIdCounter = state.sectorIdCounter || 0;
+                        squadSectorId = state.squadSectorId || null;
+                        advanceRollsMade = state.advanceRollsMade || 0;
+                        isBriefingLocked = state.isBriefingLocked || false;
+                        missionStatus = state.missionStatus || 'Briefing';
+
+                        if(state.missionDetails) {
+                            squadNameInput.value = state.missionDetails.squadName || '';
+                            missionNameInput.value = state.missionDetails.missionName || '';
+                            missionDifficultySelect.value = state.missionDetails.missionDifficulty || 'Routine';
+                            missionTypeSelect.value = state.missionDetails.missionType || 'Seize & Secure';
+                            objectiveDetailsInput.value = state.missionDetails.objectiveDetails || '';
+                            extractionZoneInput.value = state.missionDetails.extractionZone || '';
+                            missionNotesTextarea.value = state.missionDetails.missionNotes || '';
+                        }
+                    } catch (error) {
+                        console.error("Failed to load or validate state:", error);
+                        showConfirmationModal("Load Error", `Could not load saved data. It may be corrupted. Error: ${error.message}`, () => hideConfirmationModal());
+                        localStorage.removeItem('dangerCloseTrackerState');
+                    }
+                }
+                renderBarracks();
+                renderSectors();
+                updateFatigueCounter();
+                updateUIForMissionStatus();
+                if (selectedTrooperId && troopers.some(t => t.id === selectedTrooperId)) {
+                    displayTrooperDetails(selectedTrooperId);
+                } else {
+                    selectedTrooperDetails.innerHTML = '<p class="text-gray-400 text-center py-10">Select a Trooper from the Barracks to view/edit details.</p>';
+                }
+                extractionZoneContainer.classList.toggle('hidden', missionTypeSelect.value !== 'Hit & Run');
+            }
+
+            function exportData() {
+                const state = localStorage.getItem('dangerCloseTrackerState');
+                if (!state) {
+                    showConfirmationModal("No Data", "There is no data to export.", () => hideConfirmationModal());
+                    return;
+                }
+                const blob = new Blob([state], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `danger-close-squad-${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            function showClearDataModal() {
+                showConfirmationModal(
+                    'Are you sure?',
+                    'This will permanently delete all mission and trooper data from your browser. This action cannot be undone.',
+                    clearAllData
+                );
+            }
+
+            function showDeleteTrooperModal(trooper) {
+                showConfirmationModal(
+                    `Delete ${trooper.name || 'this trooper'}?`,
+                    `Are you sure you want to delete this trooper? This action cannot be undone.`,
+                    () => deleteTrooper(trooper.id)
+                );
+            }
+
+            function showConfirmationModal(title, text, onConfirm) {
+                modalTitle.textContent = title;
+                modalText.textContent = text;
+                currentConfirmAction = onConfirm;
+                confirmationModal.classList.remove('hidden');
+                setTimeout(() => confirmationModal.classList.remove('opacity-0'), 10);
+            }
+
+            function hideConfirmationModal() {
+                confirmationModal.classList.add('opacity-0');
+                setTimeout(() => {
+                    confirmationModal.classList.add('hidden');
+                    currentConfirmAction = null;
+                }, 300);
+            }
+
+            function clearAllData() {
+                localStorage.removeItem('dangerCloseTrackerState');
+                location.reload();
+            }
+
+            function validateStateSchema(state) {
+                if (!state || typeof state !== 'object') {
+                    throw new Error("Saved data is not a valid object.");
+                }
+                const requiredKeys = {
+                    troopers: 'array',
+                    hardTargets: 'array',
+                    sectors: 'array',
+                    sectorHistory: 'array',
+                    trooperIdCounter: 'number',
+                    hardTargetIdCounter: 'number',
+                    sectorIdCounter: 'number',
+                    isBriefingLocked: 'boolean',
+                    missionStatus: 'string',
+                    missionDetails: 'object'
+                };
+                for (const key in requiredKeys) {
+                    if (state[key] === undefined) {
+                         throw new Error(`Missing key: '${key}'.`);
+                    }
+                    if (requiredKeys[key] === 'array' && !Array.isArray(state[key])) {
+                        throw new Error(`Invalid key: '${key}'. Expected an array.`);
+                    }
+                    if (typeof state[key] !== requiredKeys[key] && requiredKeys[key] !== 'array') {
+                        throw new Error(`Invalid key: '${key}'. Expected type '${requiredKeys[key]}'.`);
+                    }
+                }
+                return true;
+            }
+
+
+            // --- TAB SWITCHING LOGIC ---
+            function switchTab(tabName) {
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                });
+                tabButtons.forEach(button => {
+                    button.classList.remove('active');
+                });
+
+                document.getElementById(`${tabName}TabContent`).classList.remove('hidden');
+                document.querySelector(`.tab-btn[data-tab="${tabName}"]`).classList.add('active');
+            }
+
+
+            // --- INITIALIZATION & EVENT LISTENERS ---
+            lucide.createIcons();
+
+            const debouncedSaveState = debounce(saveState, 300);
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (!button.disabled) {
+                        switchTab(button.dataset.tab);
+                    }
+                });
+            });
+
+            // Barracks list event delegation
+            const barracksLists = [deployedList, readyList, recoveringList, memorialList];
+            barracksLists.forEach(list => {
+                if (list) {
+                    list.addEventListener('click', (e) => {
+                        const listItem = e.target.closest('.trooper-list-item');
+                        if (!listItem) return;
+                        const trooperId = listItem.dataset.trooperId;
+
+                        if (e.target.closest('.deploy-btn')) {
+                            setTrooperDeploymentStatus(trooperId, 'Deployed');
+                        } else if (e.target.closest('.return-btn')) {
+                            setTrooperDeploymentStatus(trooperId, 'Ready');
+                        } else {
+                            displayTrooperDetails(trooperId);
+                        }
+                    });
+                }
+            });
+
+
+            hardTargetsContainer.addEventListener('click', (e) => {
+                const target = e.target;
+                const card = target.closest('[data-ht-id]');
+                if (!card) return;
+                const htId = card.dataset.htId;
+                const hardTarget = hardTargets.find(ht => ht.id === htId);
+                if (!hardTarget) return;
+
+                if (target.closest('.delete-ht-btn')) {
+                    deleteHardTarget(htId);
+                } else if (target.closest('.hit-pip')) {
+                    const pipIndex = parseInt(target.closest('.hit-pip').dataset.pipIndex);
+                    hardTarget.currentHits = (hardTarget.currentHits === pipIndex) ? pipIndex - 1 : pipIndex;
+                    renderHardTargets();
+                    saveState();
+                } else if (target.closest('.random-target-btn')) {
+                    selectRandomHardTargetTarget(hardTarget);
+                }
+            });
+            hardTargetsContainer.addEventListener('input', (e) => {
+                const target = e.target;
+                const card = target.closest('[data-ht-id]');
+                if (!card) return;
+                const htId = card.dataset.htId;
+                const hardTarget = hardTargets.find(ht => ht.id === htId);
+                if (!hardTarget) return;
+
+                if (target.classList.contains('ht-name-input')) {
+                    hardTarget.name = target.value;
+                    renderEngagementRoster();
+                    updateRollContext();
+                    debouncedSaveState();
+                } else if (target.classList.contains('ht-target-select')) {
+                    hardTarget.targetedTrooperId = target.value === 'null' ? null : target.value;
+                    updateRollContext();
+                    saveState();
+                }
+            });
+
+            sectorList.addEventListener('click', e => {
+                const card = e.target.closest('.sector-card');
+                if (!card) return;
+                const sectorId = card.dataset.sectorId;
+                const sector = sectors.find(s => s.id === sectorId);
+                if (!sector) return;
+
+                if (e.target.closest('.delete-sector-btn')) {
+                    deleteSector(sectorId);
+                } else if (e.target.closest('.move-squad-btn')) {
+                    moveSquadToSector(sectorId);
+                } else if (e.target.closest('.lz-btn')) {
+                    sectors.forEach(s => s.isLZ = (s.id === sectorId)); // Only one LZ
+                    renderSectors();
+                    saveState();
+                } else if (e.target.closest('.ez-btn')) {
+                    sectors.forEach(s => s.isEZ = (s.id === sectorId)); // Only one EZ
+                    renderSectors();
+                    saveState();
+                }
+            });
+            sectorList.addEventListener('input', e => {
+                const card = e.target.closest('.sector-card');
+                if (!card) return;
+                const sectorId = card.dataset.sectorId;
+                const sector = sectors.find(s => s.id === sectorId);
+                if (!sector) return;
+
+                if (e.target.classList.contains('sector-name-input')) {
+                    sector.name = e.target.value;
+                    debouncedSaveState();
+                } else if (e.target.classList.contains('sector-cover-select')) {
+                    sector.cover = e.target.value;
+                    saveState();
+                } else if (e.target.classList.contains('sector-content-select')) {
+                    sector.content = e.target.value;
+                    card.querySelector('.boon-container').classList.toggle('hidden', sector.content !== 'Boon');
+                    card.querySelector('.threat-level-container').classList.toggle('hidden', sector.content !== 'Threat');
+                    if (sector.id === squadSectorId) {
+                        moveSquadToSector(squadSectorId); // Re-run logic to update calculator
+                    }
+                    saveState();
+                } else if (e.target.classList.contains('boon-description-input')) {
+                    sector.boonDescription = e.target.value;
+                    debouncedSaveState();
+                } else if (e.target.classList.contains('sector-threat-level-select')) {
+                    sector.threatLevel = parseInt(e.target.value);
+                     if (sector.id === squadSectorId) {
+                        moveSquadToSector(squadSectorId); // Re-run logic to update calculator
+                    }
+                    saveState();
+                }
+            });
+
+            engagementTroopersContainer.addEventListener('change', e => {
+                const row = e.target.closest('tr');
+                if (!row) return;
+                const trooperId = row.id.replace('engagement-', '');
+                const trooper = troopers.find(t => t.id === trooperId);
+                if (!trooper) return;
+
+                const target = e.target;
+                if (target.classList.contains('status-select')) {
+                    updateStatusVisuals(trooper.id, target.value);
+                } else if (target.classList.contains('intent-select')) {
+                    trooper.intent = target.value;
+                    const targetSelect = row.querySelector('.target-select');
+                    const isFiringAtHardTarget = trooper.intent === 'Fire (Hard Target)';
+                    targetSelect.disabled = !isFiringAtHardTarget;
+                    if (!isFiringAtHardTarget) {
+                        trooper.hardTargetId = null;
+                        targetSelect.value = 'null';
+                    }
+                } else if (target.classList.contains('ammo-spent-select')) {
+                    trooper.ammoSpentThisRound = parseInt(target.value);
+                } else if (target.classList.contains('target-select')) {
+                    trooper.hardTargetId = target.value === 'null' ? null : target.value;
+                } else if (target.classList.contains('offensive-pos-select')) {
+                    trooper.offensivePosition = target.value;
+                } else if (target.classList.contains('defensive-pos-select')) {
+                    trooper.defensivePosition = target.value;
+                }
+                updateRollContext();
+            });
+            engagementTroopersContainer.addEventListener('click', e => {
+                const row = e.target.closest('tr');
+                if (!row) return;
+                const trooperId = row.id.replace('engagement-', '');
+                const trooper = troopers.find(t => t.id === trooperId);
+                if (!trooper || trooper.deploymentStatus === 'Dead') return;
+
+                if (e.target.closest('.grit-flame-icon')) {
+                    trooper.grit = trooper.grit === 1 ? 0 : 1;
+                    updateGritVisuals(trooper.id, trooper.grit);
+                } else if (e.target.closest('.ammo-button')) {
+                    const value = parseInt(e.target.closest('.ammo-button').dataset.ammoValue);
+                    const currentAmmo = trooper.ammo;
+                    const newAmmo = (currentAmmo === value) ? 0 : value;
+                    updateAmmoVisuals(trooper.id, newAmmo);
+                }
+            });
+
+            function startDebriefing() {
+                missionStatus = 'Debriefing';
+                debriefingModal.classList.remove('hidden');
+                setTimeout(() => debriefingModal.classList.remove('opacity-0'), 10);
+            }
+
+            function hideDebriefingModal() {
+                debriefingModal.classList.add('opacity-0');
+                setTimeout(() => debriefingModal.classList.add('hidden'), 300);
+            }
+
+            function processMissionEnd(wasSuccessful) {
+                const deployedSquad = getDeployedSquad();
+                deployedSquad.forEach(trooper => {
+                    if (trooper.deploymentStatus === 'Dead') return;
+
+                    // Check for recovery condition
+                    if (trooper.combatStatus === 'Wounded' || trooper.combatStatus === 'Bleeding Out') {
+                        trooper.deploymentStatus = 'Recovering';
+                    } else {
+                        trooper.deploymentStatus = 'Ready';
+                    }
+                    // Reset combat status for next mission
+                    trooper.combatStatus = 'OK';
+                });
+
+                // Reset mission parameters for the next one
+                sectors = [];
+                sectorHistory = [];
+                squadSectorId = null;
+                advanceRollsMade = 0;
+                resetFatigue();
+                
+                toggleBriefingLock(false); // This also sets missionStatus back to 'Briefing'
+                hideDebriefingModal();
+            }
+
+            addTrooperBtn.addEventListener('click', () => addTrooper());
+            startEngagementBtn.addEventListener('click', startEngagement);
+            endEngagementBtn.addEventListener('click', () => endEngagement('manual'));
+            retreatBtn.addEventListener('click', () => endEngagement('retreat'));
+            endMissionBtn.addEventListener('click', startDebriefing);
+            missionSuccessBtn.addEventListener('click', () => processMissionEnd(true));
+            missionFailureBtn.addEventListener('click', () => processMissionEnd(false));
+            resolveExchangeBtn.addEventListener('click', resolveExchange);
+            nextRoundBtn.addEventListener('click', nextRound);
+            encounterDifficultySelect.addEventListener('change', updateMomentumToWin);
+            coverConditionSelect.addEventListener('change', updateCoverDescription);
+            exportDataBtn.addEventListener('click', exportData);
+            clearDataBtn.addEventListener('click', showClearDataModal);
+            modalCancelBtn.addEventListener('click', hideConfirmationModal);
+            modalConfirmBtn.addEventListener('click', () => {
+                 if (typeof currentConfirmAction === 'function') {
+                    currentConfirmAction();
+                }
+                hideConfirmationModal();
+            });
+            addHardTargetBtn.addEventListener('click', addHardTarget);
+
+            addSectorBtn.addEventListener('click', addSector);
+            calculateAdvanceBtn.addEventListener('click', calculateAdvance);
+            resetFatigueBtn.addEventListener('click', resetFatigue);
+            [fatigueModifierInput, weatherModifierSelect].forEach(el => {
+                el.addEventListener('change', updateAdvanceCalculator);
+            });
+
+            doneBriefingBtn.addEventListener('click', () => toggleBriefingLock(true));
+            editBriefingBtn.addEventListener('click', () => toggleBriefingLock(false));
+
+            missionTypeSelect.addEventListener('change', (e) => {
+                extractionZoneContainer.classList.toggle('hidden', e.target.value !== 'Hit & Run');
+                saveState();
+            });
+            finishCatchBreathBtn.addEventListener('click', () => {
+                catchBreathSection.classList.add('hidden');
+            });
+
+            offenseRollInput.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                successAtCostChoice = null;
+                successAtACostChoiceDiv.classList.add('hidden');
+                offenseRollOutcome.classList.add('hidden');
+
+                const outcomeText = offenseRollOutcome.querySelector('#outcomeText');
+                const additionalSixesSection = offenseRollOutcome.querySelector('#additionalSixesSection');
+
+                if (value >= 1 && value <= 3) {
+                    outcomeText.innerHTML = `<span class="text-red-400 font-semibold">Pushed Back: -1 Momentum.</span>`;
+                    additionalSixesSection.classList.add('hidden');
+                    offenseRollOutcome.classList.remove('hidden');
+                } else if (value === 4 || value === 5) {
+                    successAtACostChoiceDiv.classList.remove('hidden');
+                    costRollValueSpan.textContent = value;
+                    const activeTroopers = getDeployedSquad().filter(t => t.deploymentStatus !== 'Dead' && t.combatStatus !== 'Bleeding Out');
+                    vulnerableTrooperSelect.innerHTML = '';
+                    if (activeTroopers.length > 0) {
+                        activeTroopers.forEach(trooper => {
+                            const option = document.createElement('option');
+                            option.value = trooper.id;
+                            option.textContent = trooper.name;
+                            vulnerableTrooperSelect.appendChild(option);
+                        });
+                        vulnerableTrooperId = activeTroopers[0].id;
+                        vulnerableTrooperSelect.value = vulnerableTrooperId;
+                        costTrooperSelectionDiv.classList.remove('hidden');
+                    } else {
+                        vulnerableTrooperId = null;
+                        costTrooperSelectionDiv.classList.add('hidden');
+                    }
+                } else if (value === 6) {
+                    outcomeText.innerHTML = `<span class="text-green-400 font-semibold">Success! +1 Momentum.</span>`;
+                    additionalSixesSection.classList.remove('hidden');
+                    offenseRollOutcome.classList.remove('hidden');
+                }
+            });
+
+            vulnerableTrooperSelect.addEventListener('change', (e) => {
+                vulnerableTrooperId = e.target.value;
+            });
+
+            randomVulnerableBtn.addEventListener('click', () => {
+                const options = vulnerableTrooperSelect.options;
+                if (options.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * options.length);
+                    vulnerableTrooperSelect.selectedIndex = randomIndex;
+                    vulnerableTrooperSelect.dispatchEvent(new Event('change'));
+                }
+            });
+
+            holdPositionBtn.addEventListener('click', () => {
+                successAtCostChoice = 'hold';
+                offenseRollInput.disabled = true;
+                successAtACostChoiceDiv.classList.add('hidden');
+                const outcomeText = offenseRollOutcome.querySelector('#outcomeText');
+                const additionalSixesSection = offenseRollOutcome.querySelector('#additionalSixesSection');
+                outcomeText.innerHTML = `<span class="text-gray-300">Choice: Hold Position.</span> <span class="text-gray-400">No Momentum change.</span>`;
+                additionalSixesSection.classList.add('hidden');
+                offenseRollOutcome.classList.remove('hidden');
+                updateRollContext();
+            });
+
+            successAtACostBtn.addEventListener('click', () => {
+                if (!vulnerableTrooperId && vulnerableTrooperSelect.options.length > 0) {
+                 vulnerableTrooperId = vulnerableTrooperSelect.value;
+                }
+                successAtCostChoice = 'cost';
+                offenseRollInput.disabled = true;
+                successAtACostChoiceDiv.classList.add('hidden');
+                const trooperName = troopers.find(t => t.id === vulnerableTrooperId)?.name || 'a trooper';
+                const outcomeText = offenseRollOutcome.querySelector('#outcomeText');
+                const additionalSixesSection = offenseRollOutcome.querySelector('#additionalSixesSection');
+                outcomeText.innerHTML = `<span class="text-yellow-400">Choice: Success at Cost.</span> <span class="text-gray-400">+1 Momentum, ${trooperName} gets -1d6 Defense.</span>`;
+                additionalSixesSection.classList.add('hidden');
+                offenseRollOutcome.classList.remove('hidden');
+                updateRollContext();
+            });
+
+            offenseRollCard.addEventListener('input', e => {
+                if (!e.target.classList.contains('ht-roll-input')) return;
+                const container = e.target.closest('.ht-roll-container');
+                const htId = container.dataset.htId;
+                const value = parseInt(e.target.value);
+
+                const costChoiceDiv = container.querySelector('.ht-cost-choice');
+                const outcomeDiv = container.querySelector('.ht-roll-outcome');
+                const costTrooperDiv = container.querySelector('.ht-cost-trooper-selection');
+
+                delete hardTargetRollOutcomes[htId];
+                costChoiceDiv.classList.add('hidden');
+                outcomeDiv.classList.add('hidden');
+
+                if (value >= 6) {
+                    outcomeDiv.innerHTML = `<span class="text-green-400 font-semibold">Hit!</span>`;
+                    outcomeDiv.classList.remove('hidden');
+                } else if (value >= 4) {
+                    costChoiceDiv.classList.remove('hidden');
+                    costChoiceDiv.querySelector('.ht-cost-roll-value').textContent = value;
+                    const vulnerableSelect = costChoiceDiv.querySelector('.ht-vulnerable-select');
+                    if (vulnerableSelect.options.length > 0) {
+                        costTrooperDiv.classList.remove('hidden');
+                        if (!hardTargetRollOutcomes[htId]) hardTargetRollOutcomes[htId] = {};
+                        hardTargetRollOutcomes[htId].vulnerableTrooperId = vulnerableSelect.value;
+                    } else {
+                        costTrooperDiv.classList.add('hidden');
+                    }
+                } else if (value >= 1) {
+                    outcomeDiv.innerHTML = `<span class="text-red-400">Miss.</span>`;
+                    outcomeDiv.classList.remove('hidden');
+                }
+            });
+
+            offenseRollCard.addEventListener('click', e => {
+                const target = e.target;
+                const container = target.closest('.ht-roll-container');
+                if (!container) return;
+                const htId = container.dataset.htId;
+
+                const costChoiceDiv = container.querySelector('.ht-cost-choice');
+                const outcomeDiv = container.querySelector('.ht-roll-outcome');
+                const input = container.querySelector('.ht-roll-input');
+
+                if (target.classList.contains('ht-hold-btn')) {
+                    if (!hardTargetRollOutcomes[htId]) hardTargetRollOutcomes[htId] = {};
+                    hardTargetRollOutcomes[htId].choice = 'hold';
+                    input.disabled = true;
+                    costChoiceDiv.classList.add('hidden');
+                    outcomeDiv.innerHTML = `<span class="text-gray-300">Choice: Hold. No hit.</span>`;
+                    outcomeDiv.classList.remove('hidden');
+                } else if (target.classList.contains('ht-cost-btn')) {
+                    if (!hardTargetRollOutcomes[htId]) hardTargetRollOutcomes[htId] = {};
+                    hardTargetRollOutcomes[htId].choice = 'cost';
+                    const vulnerableSelect = costChoiceDiv.querySelector('.ht-vulnerable-select');
+                    hardTargetRollOutcomes[htId].vulnerableTrooperId = vulnerableSelect.value;
+                    const trooperName = troopers.find(t => t.id === vulnerableSelect.value)?.name || 'a trooper';
+
+                    input.disabled = true;
+                    costChoiceDiv.classList.add('hidden');
+                    outcomeDiv.innerHTML = `<span class="text-yellow-400">Choice: Hit at Cost.</span> <span class="text-gray-400">${trooperName} gets -1d6 Defense.</span>`;
+                    outcomeDiv.classList.remove('hidden');
+                }
+            });
+
+            offenseRollCard.addEventListener('change', e => {
+                 if (!e.target.classList.contains('ht-vulnerable-select')) return;
+                 const container = e.target.closest('.ht-roll-container');
+                 const htId = container.dataset.htId;
+                 if (!hardTargetRollOutcomes[htId]) hardTargetRollOutcomes[htId] = {};
+                 hardTargetRollOutcomes[htId].vulnerableTrooperId = e.target.value;
+            });
+
+
+            [squadNameInput, missionNameInput, objectiveDetailsInput, extractionZoneInput, missionNotesTextarea].forEach(el => {
+                el.addEventListener('input', debouncedSaveState);
+            });
+            [missionDifficultySelect, missionTypeSelect].forEach(el => {
+                el.addEventListener('change', saveState);
+            });
+
+            missionTrackerHeader.addEventListener('click', () => toggleCollapsible(missionContent, missionToggleIcon));
+
+            importDataBtn.addEventListener('click', () => importFileInput.click());
+            importFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const state = JSON.parse(e.target.result);
+                        validateStateSchema(state);
+                        localStorage.setItem('dangerCloseTrackerState', JSON.stringify(state));
+                        location.reload();
+                    } catch (error) {
+                        console.error("Import Failed:", error.message);
+                        showConfirmationModal("Import Failed", `The selected file is not a valid Danger Close save file. Error: ${error.message}`, () => hideConfirmationModal());
+                    }
+                };
+                reader.readAsText(file);
+                importFileInput.value = '';
+            });
+
+            loadState();
+        });
+    </script>
+</body>
+</html>
