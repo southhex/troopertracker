@@ -10,14 +10,41 @@
 
     <header>
         <h1>DANGER CLOSE - Trooper Roster</h1>
-        <button id="add-trooper-btn" class="add-button">Add New Trooper</button>
     </header>
 
+    <div id="tabs">
+        <button id="mission-tab-btn" class="tab-button active">Mission Interface</button>
+        <button id="barracks-tab-btn" class="tab-button">Barracks Management</button>
+    </div>
+
     <main>
-        <div id="roster-container">
+        <div id="app-container">
+            <div id="mission-view" class="view">
+                <h2>Mission Roster</h2>
+                <div id="roster-container">
+                    </div>
             </div>
+
+            <div id="barracks-view" class="view hidden">
+                <h2>Barracks Management</h2>
+                <button id="add-trooper-btn" class="add-button">Add New Trooper</button>
+                <div id="barracks-roster-container">
+                    </div>
+            </div>
+        </div>
+        
+    <div id="confirmation-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h3>Confirm Deletion</h3>
+        <p>Are you sure you want to delete <span id="trooper-name-to-delete">this trooper</span>?</p>
+        <div class="modal-actions">
+            <button id="cancel-delete-btn" class="modal-cancel">Cancel</button>
+            <button id="confirm-delete-btn" class="modal-confirm">Delete</button>
+        </div>
+    </div>
+</div>
     </main>
 
-    <script src="script.js"></script>
-</body>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="script.js" type="module"></script> </body>
 </html>

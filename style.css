@@ -52,7 +52,7 @@ h1 {
 }
 
 /* Roster Grid */
-#roster-container {
+#roster-container, #barracks-roster-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
@@ -113,3 +113,317 @@ h1 {
 .trooper-card[data-status="Bleeding Out"] { border-left: 5px solid #b71c1c; }
 .trooper-card[data-status="Dead"] { border-left: 5px solid #212121; }
 .trooper-card[data-status="Inactive"] { border-left: 5px solid #9e9e9e; }
+
+
+/* --- LUCIDE ICON STYLES --- */
+.icon-pips {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Base styling for all Lucide SVGs in the pips */
+.icon-pips svg {
+    cursor: pointer;
+    stroke: #999; /* "Empty" outline color */
+    fill: none; /* "Empty" fill */
+    width: 20px;
+    height: 20px;
+    transition: all 0.2s;
+}
+
+.icon-pips svg:hover {
+    stroke: #61dafb; /* Highlight on hover */
+}
+
+/* Styling for the "filled" state */
+.icon-pips svg.filled {
+    stroke-width: 2;
+}
+
+/* Grit: Flame */
+.icon-pips svg[data-lucide="flame"].filled {
+    stroke: #ffeb3b;
+    fill: #ffeb3b; /* Grit yellow */
+    fill-opacity: 0.4;
+}
+
+/* Ammo: Box */
+.icon-pips svg[data-lucide="box"].filled {
+    stroke: #f44336;
+    fill: #f44336; /* Ammo red */
+    fill-opacity: 0.4;
+}
+
+.icon-pips.counter-pips svg.filled {
+    /* Set the stroke and fill directly from the custom property */
+    stroke: var(--counter-fill-color, #838383) !important; 
+    fill: var(--counter-fill-color, #838383) !important; 
+    fill-opacity: 0.4;
+}
+
+/* --- TAB STYLING --- */
+#tabs {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    color: #f0f0f0;
+    padding: 10px 15px;
+    margin-right: 10px;
+    cursor: pointer;
+    font-size: 1.1em;
+    border-radius: 4px 4px 0 0;
+    transition: background-color 0.2s;
+}
+
+.tab-button:hover:not(.active) {
+    background-color: #3a3f4b;
+}
+
+.tab-button.active {
+    background-color: #3a3f4b;
+    border-bottom: 3px solid #61dafb;
+    font-weight: bold;
+}
+
+/* Hide / Show Views */
+.view {
+    padding-top: 10px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Equipment Display in Mission Card Header */
+.mission-card h2 .gear-display {
+    font-size: 0.7em;
+    color: #999;
+    font-weight: normal;
+    margin-left: 10px;
+}
+
+.equipment-label {
+    font-weight: bold;
+    color: #ccc;
+    font-size: 0.9em; /* Make these labels slightly smaller */
+}
+
+.status-display {
+    color: #61dafb;
+}
+
+/* --- CONFIRMATION MODAL STYLING --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it is above all other content */
+}
+
+.modal-content {
+    background-color: #3a3f4b;
+    color: #f0f0f0;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.modal-content h3 {
+    color: #f44336; 
+    margin-top: 0;
+}
+
+.modal-content p {
+    margin-bottom: 20px;
+}
+
+.modal-actions button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.modal-cancel {
+    background-color: #555;
+    color: white;
+}
+.modal-cancel:hover {
+    background-color: #777;
+}
+
+.modal-confirm {
+    background-color: #f44336; /* Red for deletion */
+    color: white;
+}
+.modal-confirm:hover {
+    background-color: #da190b;
+}
+
+.hidden {
+    display: none;
+}
+
+/* --- TOOLTIP STYLING --- */
+.gear-item, .item-select {
+    position: relative;
+    cursor: help; /* Indicates interactivity */
+}
+
+.tooltip {
+    visibility: hidden;
+    background-color: #2c2f37;
+    color: #f0f0f0;
+    text-align: left;
+    border-radius: 4px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 1001;
+    
+    /* MODIFIED: Reverting to display ABOVE element */
+    bottom: 120%; 
+    left: 0; /* Align to the left edge of the parent gear item */
+    transform: none; /* Removed horizontal center transform */
+    
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    min-width: 250px;
+    white-space: normal;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid #555;
+    
+    /* Constrain width */
+    max-width: 80vw;
+}
+
+/* Ensure the tooltip shows on hover */
+.gear-item:hover .tooltip,
+.item-select:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Show the tooltip when hovering over the container */
+.gear-item:hover .tooltip,
+.item-select:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.gear-list {
+    grid-column: 1 / -1; /* Make the list span the whole width in the form-grid */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.gear-list-item {
+    background-color: #555;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    position: relative; /* Container for tooltip */
+}
+
+.remove-gear-btn {
+    background: none;
+    border: none;
+    color: #f44336;
+    font-weight: bold;
+    margin-left: 5px;
+    cursor: pointer;
+    line-height: 1;
+}
+.remove-gear-btn:hover {
+    color: #ff7961;
+}
+
+/* --- POSITION CHIP STYLING --- */
+
+.position-chips-wrapper {
+    /* Ensures the chips take the full grid column */
+    grid-column: 2 / 3; 
+}
+
+.position-chips-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.position-chip {
+    padding: 6px 10px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    background-color: #3e4451; /* Darker base */
+    color: #ccc;
+    transition: all 0.2s ease;
+    position: relative; /* For tooltip anchoring */
+}
+
+/* Tooltip adjustment for chips */
+.position-chip .tooltip {
+    /* Ensures tooltips show up correctly for chips */
+    bottom: -120%; 
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 200px;
+    text-align: center;
+}
+.position-chip:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Base Hover State */
+.position-chip:hover {
+    filter: brightness(1.2);
+}
+
+/* --- ACTIVE COLOR STATES --- */
+
+/* GREEN: Flanking, Fortified */
+.position-chip.green.active {
+    background-color: #4CAF50; /* Solid Green */
+    color: #222;
+    border-color: #81c784;
+    box-shadow: 0 0 5px #4CAF50;
+}
+
+/* YELLOW: Engaged, In Cover */
+.position-chip.yellow.active {
+    background-color: #FFC107; /* Solid Yellow */
+    color: #222;
+    border-color: #ffd54f;
+    box-shadow: 0 0 5px #FFC107;
+}
+
+/* RED: Limited, Flanked */
+.position-chip.red.active {
+    background-color: #f44336; /* Solid Red */
+    color: white;
+    border-color: #e57373;
+    box-shadow: 0 0 5px #f44336;
+}
