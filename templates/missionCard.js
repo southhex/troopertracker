@@ -1,5 +1,11 @@
 // /templates/missionCard.js
 
+// Function to map status to a CSS-friendly class name
+const getStatusClass = (status) => {
+    // Converts "Bleeding Out" to "bleeding-out"
+    return status.toLowerCase().replace(/\s/g, '-');
+};
+
 /**
  * Generates the HTML string for a Trooper card in the Mission Roster view.
  * * @param {object} trooper - The trooper data object.
@@ -10,10 +16,14 @@
  * @param {string} gearListHtml - NEW: HTML string for the list of equipped items.
  * @returns {string} The complete HTML string for the mission card.
  */
-export function generateMissionCard(trooper, gritPips, ammoPips, equipmentPips, offChips, defChips,gearListHtml) {
+export function generateMissionCard(trooper, gritPips, ammoPips, offChips, defChips, gearListHtml, equipmentPips) {
+    const statusClass = getStatusClass(trooper.status);
+    // Add the pulsing class only for 'Bleeding Out' status
+    const pulseClass = trooper.status === 'Bleeding Out' ? 'bleeding-pulse' : '';
+    
     return `
         <h2>
-            ${trooper.name}
+            ${trooper.name} <i class="status-icon ${statusClass} ${pulseClass}" data-lucide=activity></i>
         </h2>
 
         <div class="form-grid">
@@ -42,11 +52,13 @@ export function generateMissionCard(trooper, gritPips, ammoPips, equipmentPips, 
             <div class="position-chips-wrapper">
                 ${defChips}
             </div>
-            
-            <label>Equipment:</label>
-            <div class="gear-list">${gearListHtml}</div>
-            
-            ${equipmentPips}
+
+        <label>Equipment: </label>
+        <div class="gear-list">
+        ${gearListHtml}
+        </div>
+        
+        ${equipmentPips}    
         </div>
     `;
 }

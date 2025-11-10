@@ -69,10 +69,7 @@ function loadRoster() {
         const updatedTrooper = {
             ...t,
             gritMax: t.gritMax || 1, 
-            gritCurrent: Math.min(t.gritCurrent, t.gritMax || 1), 
-            offensivePosition: t.offensivePosition || "N/A", 
-            defensivePosition: t.defensivePosition || "N/A",
-            // NOTE: Removed hardcoded initialization for armor_absorbed_current and pack_ammo_current
+            gritCurrent: Math.min(t.gritCurrent, t.gritMax || 1)
         };
         // NEW: Initialize all equipment counters to their max value if they are missing
         return initializeTrooperCounters(updatedTrooper); 
@@ -102,12 +99,8 @@ function createNewTrooper() {
         gear: "assault_rifle, medium_armor", // Default gear
         gritCurrent: 1, 
         gritMax: 1,     
-        ammoCurrent: MAX_AMMO, 
-        offensivePosition: "N/A", 
-        defensivePosition: "N/A", 
+        ammoCurrent: MAX_AMMO,
         notes: "",
-        
-        // REMOVED: Initial counter values were here.
     };
 
     // NEW: Initialize counters based on default gear ("assault_rifle, medium_armor")
@@ -179,25 +172,6 @@ function cancelDeletion() {
 
 
 // --- GEAR MANAGEMENT FUNCTIONS ---
-
-/**
- * Adds an item to a trooper's gear list when selected from the dropdown.
- */
-function addGearItem(id, itemKey) {
-    const trooper = roster.find(t => t.id === id);
-    if (trooper && itemKey) {
-        // Clean and split current gear, filtering out empty strings
-        const currentGearArray = trooper.gear.split(',').map(item => item.trim()).filter(i => i.length > 0);
-        
-        if (!currentGearArray.includes(itemKey)) {
-            currentGearArray.push(itemKey);
-            trooper.gear = currentGearArray.join(', ');
-            saveRoster();
-            requestAnimationFrame(renderApp);
-        }
-    }
-}
-
 /**
  * Removes an item from a trooper's gear list. 
  */
@@ -226,6 +200,23 @@ function handleGearListClick(event) {
     }
 }
 
+/**
+ * Removes custom counter properties from the trooper object when an item is unequipped.
+ */
+function removeGearCounterProperties(trooper, gearId) {
+    const item = EQUIPMENT_DATABASE[gearId];
+    // Only proceed if the item exists and has counters defined
+    if (!item || !item.counters) return;
+
+    Object.keys(item.counters).forEach(counterId => {
+        const currentField = counterId + '_current';
+        
+        // Check if the property exists on the trooper and delete it
+        if (trooper.hasOwnProperty(currentField)) {
+            delete trooper[currentField];
+        }
+    });
+}
 
 // --- VIEW HELPER FUNCTIONS ---
 /**
@@ -352,13 +343,13 @@ function renderEquipmentPips(trooper) {
 
 const POSITION_DEFS = {
     // [Position Name]: { category: 'offensivePosition' | 'defensivePosition', colorClass: 'green' | 'yellow' | 'red', modifier: 'Modifier description for tooltip' }
-    'Flanking':    { colorClass: 'green', modifier: '+2d6 Offense / All Attack Rolls' },
-    'Engaged':     { colorClass: 'yellow', modifier: '+1d6 Offense / Range 1' },
-    'Limited':     { colorClass: 'red', modifier: '-1d6 Offense / Visibility Blocked' },
+    'Flanking':    { colorClass: 'green', modifier: '+1d6 when Firing' },
+    'Engaged':     { colorClass: 'yellow', modifier: '' },
+    'Limited':     { colorClass: 'red', modifier: '-1d6 when Firing' },
     
-    'Fortified':   { colorClass: 'green', modifier: '+2d6 Defense / Cannot Move' },
-    'In Cover':    { colorClass: 'yellow', modifier: '+1d6 Defense' },
-    'Flanked':     { colorClass: 'red', modifier: '-1d6 Defense / No Cover' },
+    'Fortified':   { colorClass: 'green', modifier: 'Injury on 1' },
+    'In Cover':    { colorClass: 'yellow', modifier: 'Injury on 1-2' },
+    'Flanked':     { colorClass: 'red', modifier: 'Injury on 1-3' },
 };
 
 /**
@@ -371,14 +362,19 @@ function renderPositionChips(trooper, fieldName) {
         (fieldName === 'defensivePosition' && ['Fortified', 'In Cover', 'Flanked'].includes(key))
     );
 
-    let html = `<div class="position-chips-group" data-field="${fieldName}" data-id="${trooper.id}">`;
+    let chipsHtml = `<div class="position-chips-group" data-field="${fieldName}" data-id="${trooper.id}">`;
+    let modifierText = '';
 
     positions.forEach(position => {
         const def = POSITION_DEFS[position];
         const isActive = trooper[fieldName] === position;
         const activeClass = isActive ? 'active' : '';
 
-        html += `
+        if (isActive) {
+            modifierText = def.modifier;
+        }
+
+        chipsHtml += `
             <button 
                 class="position-chip ${def.colorClass} ${activeClass}" 
                 data-id="${trooper.id}" 
@@ -386,14 +382,17 @@ function renderPositionChips(trooper, fieldName) {
                 data-position="${position}"
             >
                 ${position}
-                <div class="tooltip tooltip-position">
-                    ${position}: ${def.modifier}
-                </div>
             </button>
         `;
     });
-    html += `</div>`;
-    return html;
+    chipsHtml += `</div>`;
+
+    if (trooper[fieldName] !== 'N/A' && modifierText) {
+        chipsHtml += `<div class="position-modifier position-modifier-${fieldName}">
+            ${modifierText}
+        </div>`;
+    }
+    return chipsHtml;
 }
 
 /**
@@ -421,6 +420,87 @@ function renderGearSelect(trooper) {
     
     return html;
 }
+
+/**
+ * Helper to get the currently equipped item of a specific type.
+ */
+function getEquippedItem(trooper, types) {
+    const gearIds = trooper.gear.split(',').map(item => item.trim().toLowerCase()).filter(id => id.length > 0);
+    return gearIds.find(id => {
+        const item = EQUIPMENT_DATABASE[id];
+        return item && types.includes(item.type);
+    });
+}
+
+/**
+ * Renders the Armor selection dropdown.
+ */
+function renderArmorSelect(trooper) {
+    const fieldName = 'gear_armor';
+    const armorTypes = ['basic_armor'];
+    const currentArmor = getEquippedItem(trooper, armorTypes);
+
+    let html = `<select class="trooper-input item-select" data-id="${trooper.id}" data-field="${fieldName}">`;
+    html += `<option value="">None</option>`; // Option to unequip
+
+    Object.keys(EQUIPMENT_DATABASE).forEach(key => {
+        const item = EQUIPMENT_DATABASE[key];
+        if (item.type === 'basic_armor') {
+            const selected = (key === currentArmor) ? 'selected' : '';
+            html += `<option value="${key}" ${selected}>${item.name}</option>`;
+        }
+    });
+
+    html += `</select><div class="tooltip">Select Armor (Max 1)</div>`;
+    return html;
+}
+
+/**
+ * Renders the Primary Weapon selection dropdown.
+ */
+function renderWeaponSelect(trooper) {
+    const fieldName = 'gear_weapon';
+    const weaponTypes = ['basic_weapon'];
+    const currentWeapon = getEquippedItem(trooper, weaponTypes);
+
+    let html = `<select class="trooper-input item-select" data-id="${trooper.id}" data-field="${fieldName}">`;
+    html += `<option value="">None</option>`;
+
+    Object.keys(EQUIPMENT_DATABASE).forEach(key => {
+        const item = EQUIPMENT_DATABASE[key];
+        if (item.type === 'basic_weapon') {
+            const selected = (key === currentWeapon) ? 'selected' : '';
+            html += `<option value="${key}" ${selected}>${item.name}</option>`;
+        }
+    });
+
+    html += `</select><div class="tooltip">Select Weapon (Max 1)</div>`;
+    return html;
+}
+
+/**
+ * Renders the Special Item selection dropdown.
+ */
+function renderSpecialSelect(trooper) {
+    const fieldName = 'gear_special';
+    const specialTypes = ['special_weapon', 'special_equipment'];
+    const currentSpecial = getEquippedItem(trooper, specialTypes);
+
+    let html = `<select class="trooper-input item-select" data-id="${trooper.id}" data-field="${fieldName}">`;
+    html += `<option value="">None</option>`;
+
+    Object.keys(EQUIPMENT_DATABASE).forEach(key => {
+        const item = EQUIPMENT_DATABASE[key];
+        if (specialTypes.includes(item.type)) {
+            const selected = (key === currentSpecial) ? 'selected' : '';
+            html += `<option value="${key}" ${selected}>${item.name}</option>`;
+        }
+    });
+
+    html += `</select><div class="tooltip">Select Special Gear (Max 1)</div>`;
+    return html;
+}
+
 
 /**
  * Generates the HTML list of currently equipped gear for the Mission Card.
@@ -528,10 +608,11 @@ function renderMissionRoster() {
             trooper, 
             renderGritPips(trooper), 
             renderAmmoPips(trooper), 
-            renderEquipmentPips(trooper),
-            renderGearList(trooper),
             renderPositionChips(trooper, 'offensivePosition'), 
-            renderPositionChips(trooper, 'defensivePosition') 
+            renderPositionChips(trooper, 'defensivePosition') ,
+            renderGearList(trooper),
+            renderEquipmentPips(trooper)
+            
         );
         
         rosterContainer.appendChild(card);
@@ -558,8 +639,10 @@ function renderBarracksRoster() {
         // Pass the rendered gear selector and the NEW Barracks Gear List
         card.innerHTML = generateBarracksCard(
             trooper, 
-            renderGearSelect(trooper), 
-            renderBarracksGearList(trooper) // <-- NEW ARGUMENT
+            renderArmorSelect(trooper),
+            renderWeaponSelect(trooper),
+            renderSpecialSelect(trooper), 
+            renderBarracksGearList(trooper)
         );
         
         barracksContainer.appendChild(card);
@@ -610,24 +693,7 @@ function handlePipClick(event) {
 /**
  * Handles all changes to trooper input fields (input, select, textarea) via event delegation.
  */
-function handleInputChange(event) {
-    const input = event.target.closest('.trooper-input');
-    
-    if (!input) return; 
 
-    const trooperId = input.dataset.id;
-    const field = input.dataset.field;
-    const value = input.value;
-
-    if (field === 'gear_add') {
-        // This is the new gear select dropdown
-        addGearItem(trooperId, value);
-        // Reset the dropdown after selection for clean UX
-        input.value = ""; 
-    } else if (trooperId && field) {
-        updateTrooper(trooperId, field, value);
-    }
-}
 /**
  * Handles clicks on Offensive and Defensive position chips.
  */
@@ -649,6 +715,66 @@ function handlePositionClick(event) {
     const newValue = trooper[field] === position ? 'N/A' : position;
     
     updateTrooper(trooperId, field, newValue);
+}
+
+/**
+ * Handles all changes to trooper input fields (input, select, textarea) via event delegation.
+ */
+function handleInputChange(event) {
+    const input = event.target.closest('.trooper-input');
+    if (!input) return; 
+
+    const trooperId = input.dataset.id;
+    const field = input.dataset.field;
+    const newItemKey = input.value; // The new item selected (or "" for "None")
+
+    // Check if this is a gear swap
+    const gearSwapFields = {
+        'gear_armor': ['basic_armor'],
+        'gear_weapon': ['basic_weapon'],
+        'gear_special': ['special_weapon', 'special_equipment']
+    };
+
+    if (gearSwapFields[field]) {
+        // This is a gear swap, not a simple field update
+        const typesToReplace = gearSwapFields[field];
+        const trooper = roster.find(t => t.id === trooperId);
+        if (!trooper) return;
+
+        let gearArray = trooper.gear.split(',').map(item => item.trim()).filter(id => id.length > 0);
+        
+        // Find the old item of this type (if any)
+        const oldItemKey = gearArray.find(id => {
+            const item = EQUIPMENT_DATABASE[id];
+            return item && typesToReplace.includes(item.type);
+        });
+
+        // Remove the old item (if it exists)
+        if (oldItemKey) {
+            gearArray = gearArray.filter(id => id !== oldItemKey);
+            // Clean up its counters
+            removeGearCounterProperties(trooper, oldItemKey);
+        }
+
+        // Add the new item (if one was selected)
+        if (newItemKey) {
+            gearArray.push(newItemKey);
+        }
+
+        // Update the trooper's gear string
+        trooper.gear = gearArray.join(', ');
+        
+        // Initialize counters for the new item (if any)
+        initializeTrooperCounters(trooper);
+        
+        // Save and re-render
+        saveRoster();
+        requestAnimationFrame(renderApp);
+
+    } else if (trooperId && field) {
+        // This is a standard field update (Name, Notes, Grit, etc.)
+        updateTrooper(trooperId, field, input.value);
+    }
 }
 
 // --- INITIALIZATION ---
