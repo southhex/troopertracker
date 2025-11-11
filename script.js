@@ -88,9 +88,6 @@ function saveRoster() {
 /**
  * Creates a new, blank trooper object and adds it to the roster.
  */
-/**
- * Creates a new, blank trooper object and adds it to the roster.
- */
 function createNewTrooper() {
     const newTrooperTemplate = {
         id: `trooper-${Date.now()}`, 
@@ -313,7 +310,7 @@ function renderEquipmentPips(trooper) {
             const currentVal = trooper[counterId + '_current']; 
             
             // Determine the fill color, defaulting to light gray if none is specified
-            const counterColor = counterDef.color || '#f0f0f0'; // Default light gray fallback
+            const counterColor = counterDef.color || 'var(--main-accent)'; // Default light gray fallback
             
             html += `<label class="equipment-label">${counterDef.name}:</label>`;
             
@@ -393,32 +390,6 @@ function renderPositionChips(trooper, fieldName) {
         </div>`;
     }
     return chipsHtml;
-}
-
-/**
- * Generates the HTML for the Barracks gear dropdown.
- */
-function renderGearSelect(trooper) {
-    // The dropdown itself is now the delegated input
-    let html = `<select id="gear-select-${trooper.id}" class="trooper-input item-select" data-id="${trooper.id}" data-field="gear_add">`;
-    
-    html += `<option value="" disabled selected>Select equipment...</option>`;
-
-    // Get all items, sort by name
-    const sortedItems = Object.keys(EQUIPMENT_DATABASE)
-        .map(key => ({ key, ...EQUIPMENT_DATABASE[key] }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-    sortedItems.forEach(item => {
-        html += `<option value="${item.key}">${item.name}</option>`;
-    });
-
-    html += `</select>`;
-    
-    // Tooltip for the select box
-    html += `<div class="tooltip">Select an item to add it to the trooper's gear list.</div>`;
-    
-    return html;
 }
 
 /**
@@ -778,8 +749,6 @@ function handleInputChange(event) {
 }
 
 // --- INITIALIZATION ---
-
-// Event Listeners are moved here (after function definitions) to resolve ReferenceError
 appContainer.addEventListener('click', handlePipClick); 
 appContainer.addEventListener('change', handleInputChange);
 appContainer.addEventListener('click', handleGearListClick); 
@@ -792,5 +761,5 @@ barracksTabBtn.addEventListener('click', () => switchView('barracks'));
 confirmDeleteBtn.addEventListener('click', confirmDeletion);
 cancelDeleteBtn.addEventListener('click', cancelDeletion);
 
-// Initial load (This must be the very last instruction to kick off the application)
+// Initial load
 loadRoster();

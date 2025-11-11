@@ -22,8 +22,7 @@ export const EQUIPMENT_DATABASE = {
             armor_absorbed: { 
                 name: "Armor", 
                 max: 1, 
-                icon: "shield",
-                color: "#4CAF50"
+                icon: "shield"
             } 
         }
     },
@@ -112,8 +111,8 @@ export const EQUIPMENT_DATABASE = {
             pack_ammo: { 
                 name: "Pack Ammo", 
                 max: 6, 
-                icon: "circle", // Lucide icon
-                color: "#8a61fbff"
+                icon: "circle",
+                color: "navy"
             } 
         }
     },

@@ -1,5 +1,11 @@
 /* Colors */
 :root {
+    /*Main Colors */
+    --main-accent: #61fb6e;
+    --text: white;
+    --text-light:#f0f0f0;
+    --text-off: #ccc;
+
     /*Satus Indicators*/
     --status-ok: #4CAF50;
     --status-grazed: #ffeb3b;
@@ -7,13 +13,17 @@
     --status-bleeding: #b71c1c;
     --status-dead: #212121;
     --status-inactive: #9e9e9e;
+
+    /*Special Colors*/
+    --grit-color: #ffeb3b;
+    --ammo-color: #f44336;
 }
 
 /* General Styling */
 body {
-    font-family: Arial, sans-serif;
+    font-family: "SUSE Mono", Arial, sans-serif;
     background-color: #282c34;
-    color: #f0f0f0;
+    color: var(--text-light);
     margin: 0;
     padding: 20px;
 }
@@ -23,19 +33,19 @@ header {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    border-bottom: 2px solid #61dafb;
+    border-bottom: 2px solid var(--main-accent);
     padding-bottom: 10px;
 }
 
 h1 {
-    color: #61dafb;
+    color: var(--main-accent);
     margin: 0;
 }
 
 /* Button Styling */
 .add-button {
     background-color: #4CAF50; /* Green */
-    color: white;
+    color: var(--text);
     margin-bottom: 1em;
     padding: 10px 15px;
     border: none;
@@ -50,7 +60,7 @@ h1 {
 
 .delete-button {
     background-color: #f44336; /* Red */
-    color: white;
+    color: var(--text);
     margin: 5px;
     border: none;
     border-radius: 5px;
@@ -65,9 +75,15 @@ h1 {
 }
 
 /* Roster Grid */
-#roster-container, #barracks-roster-container {
+#roster-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 20px;
+}
+
+#barracks-roster-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
 }
 
@@ -82,7 +98,7 @@ h1 {
 
 .trooper-card h2 {
     margin-top: 0;
-    color: #61dafb;
+    color: var(--main-accent);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -98,7 +114,7 @@ h1 {
 
 .trooper-card label {
     font-weight: bold;
-    color: #ccc;
+    color: var(--text-off);
 }
 
 .trooper-card input[type="text"],
@@ -108,7 +124,7 @@ h1 {
     width: 100%;
     padding: 8px;
     background-color: #282c34;
-    color: #f0f0f0;
+    color: var(--text-light);
     border: 1px solid #555;
     border-radius: 4px;
     box-sizing: border-box; /* Important for width */
@@ -125,7 +141,7 @@ h1 {
 .trooper-card select.trooper-input {
     /* Base appearance */
     background-color: #3e4451; /* Dark background to match chips */
-    color: #f0f0f0; /* Light text color */
+    color: var(--text-light); /* Light text color */
     border: 1px solid #555;
     border-radius: 4px;
     padding: 8px 10px;
@@ -164,7 +180,7 @@ h1 {
 
 /* 3. Focus and Hover States */
 .trooper-card select.trooper-input:hover {
-    border-color: #61dafb; /* Light blue border on hover */
+    border-color: var(--main-accent); /* Light blue border on hover */
 }
 
 .trooper-card select.trooper-input:focus {
@@ -175,7 +191,7 @@ h1 {
 /* 4. Styling the options (less customizable but helps) */
 .trooper-card select.trooper-input option {
     background-color: #3e4451; /* Keep options dark */
-    color: #f0f0f0;
+    color: var(--text-light);
     padding: 8px 0;
 }
 
@@ -183,7 +199,7 @@ h1 {
 
 .barracks-card .trooper-input {
     background-color: #3e4451; /* Dark background to match select/chips */
-    color: #f0f0f0; /* Light text color */
+    color: var(--text-light); /* Light text color */
     border: 1px solid #555;
     border-radius: 4px;
     padding: 8px 10px;
@@ -194,12 +210,12 @@ h1 {
 
 .barracks-card .trooper-input:focus {
     outline: none;
-    border-color: #61dafb; /* Light blue border on focus */
+    border-color: var(--main-accent); /* Light blue border on focus */
 
 }
 
 .barracks-card .trooper-input:hover {
-    border-color: #61dafb;
+    border-color: var(--main-accent);
 }
 
 /* Specific styling for the Notes TEXTAREA */
@@ -274,7 +290,7 @@ h1 {
 /* Base styling for all Lucide SVGs in the pips */
 .icon-pips svg {
     cursor: pointer;
-    stroke: #999; /* "Empty" outline color */
+    stroke: var(--text-off); /* "Empty" outline color */
     fill: none; /* "Empty" fill */
     width: 20px;
     height: 20px;
@@ -282,7 +298,7 @@ h1 {
 }
 
 .icon-pips svg:hover {
-    stroke: #61dafb; /* Highlight on hover */
+    stroke: var(--main-accent); /* Highlight on hover */
 }
 
 /* Styling for the "filled" state */
@@ -292,22 +308,22 @@ h1 {
 
 /* Grit: Flame */
 .icon-pips svg[data-lucide="flame"].filled {
-    stroke: #ffeb3b;
-    fill: #ffeb3b; /* Grit yellow */
+    stroke: var(--grit-color);
+    fill: var(--grit-color); 
     fill-opacity: 0.4;
 }
 
 /* Ammo: Box */
 .icon-pips svg[data-lucide="box"].filled {
-    stroke: #f44336;
-    fill: #f44336; /* Ammo red */
+    stroke: var(--ammo-color);
+    fill: var(--ammo-color);
     fill-opacity: 0.4;
 }
 
 .icon-pips.counter-pips svg.filled {
     /* Set the stroke and fill directly from the custom property */
-    stroke: var(--counter-fill-color, #838383) !important; 
-    fill: var(--counter-fill-color, #838383) !important; 
+    stroke: var(--counter-fill-color) !important;
+    fill: var(--counter-fill-color) !important; 
     fill-opacity: 0.4;
 }
 
@@ -321,7 +337,7 @@ h1 {
 .tab-button {
     background: none;
     border: none;
-    color: #f0f0f0;
+    color: var(--text-light);
     padding: 10px 15px;
     margin-right: 10px;
     cursor: pointer;
@@ -336,7 +352,7 @@ h1 {
 
 .tab-button.active {
     background-color: #3a3f4b;
-    border-bottom: 3px solid #61dafb;
+    border-bottom: 3px solid var(--main-accent);
     font-weight: bold;
 }
 
@@ -359,12 +375,12 @@ h1 {
 
 .equipment-label {
     font-weight: bold;
-    color: #ccc;
+    color: var(--text-off);
     font-size: 0.9em; /* Make these labels slightly smaller */
 }
 
 .status-display {
-    color: #61dafb;
+    color: var(--main-accent);
 }
 
 /* --- MISSION CARD ICON STYLING --- */
@@ -417,7 +433,7 @@ h1 {
 
 .modal-content {
     background-color: #3a3f4b;
-    color: #f0f0f0;
+    color: var(--text-light);
     padding: 30px;
     border-radius: 8px;
     width: 90%;
@@ -447,7 +463,7 @@ h1 {
 
 .modal-cancel {
     background-color: #555;
-    color: white;
+    color: var(--text);
 }
 .modal-cancel:hover {
     background-color: #777;
@@ -455,7 +471,7 @@ h1 {
 
 .modal-confirm {
     background-color: #f44336; /* Red for deletion */
-    color: white;
+    color: var(--text);
 }
 .modal-confirm:hover {
     background-color: #da190b;
@@ -474,7 +490,7 @@ h1 {
 .tooltip {
     visibility: hidden;
     background-color: #2c2f37;
-    color: #f0f0f0;
+    color: var(--text-light);
     text-align: left;
     border-radius: 4px;
     padding: 8px 12px;
@@ -561,7 +577,7 @@ h1 {
     cursor: pointer;
     font-size: 13px;
     background-color: #3e4451; /* Darker base */
-    color: #ccc;
+    color: var(--text-off);
     transition: all 0.2s ease;
     position: relative; /* For tooltip anchoring */
 }
@@ -606,7 +622,7 @@ h1 {
 /* RED: Limited, Flanked */
 .position-chip.red.active {
     background-color: #f44336; /* Solid Red */
-    color: white;
+    color: var(--text);
     border-color: #e57373;
     box-shadow: 0 0 5px #f44336;
 }
@@ -616,12 +632,12 @@ h1 {
     font-size: 13px;
     margin-top: 5px;
     padding: 5px 0;
-    color: #f0f0f0;
+    color: var(--text-light);
     /* Optional: Small border or background to visually separate the modifier */
     border-top: 1px solid #444; 
     padding-top: 10px;
 }
 
 .position-modifier strong {
-    color: #f0f0f0; /* Highlight the actual bonus */
+    color: var(--text-light); /* Highlight the actual bonus */
 }
