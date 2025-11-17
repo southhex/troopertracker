@@ -1,12 +1,16 @@
-/* Colors */
+/* Theme Variables */
 :root {
-    /*Main Colors */
+    /* Main Colors */
     --main-accent: #61fb6e;
     --text: white;
-    --text-light:#f0f0f0;
+    --text-light: #f0f0f0;
     --text-off: #ccc;
+    --background-dark: #282c34;
+    --background-card: #3a3f4b;
+    --background-input: #3e4451;
+    --border-color: #555;
 
-    /*Satus Indicators*/
+    /* Status Indicators */
     --status-ok: #4CAF50;
     --status-grazed: #ffeb3b;
     --status-wounded: #f44336;
@@ -14,7 +18,7 @@
     --status-dead: #212121;
     --status-inactive: #9e9e9e;
 
-    /*Special Colors*/
+    /* Resource Colors */
     --grit-color: #ffeb3b;
     --ammo-color: #f44336;
 }
@@ -22,7 +26,7 @@
 /* General Styling */
 body {
     font-family: "SUSE Mono", Arial, sans-serif;
-    background-color: #282c34;
+    background-color: var(--background-dark);
     color: var(--text-light);
     margin: 0;
     padding: 20px;
@@ -74,6 +78,34 @@ h1 {
     background-color: #da190b;
 }
 
+.deploy-button {
+    color: var(--text);
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+/* Deploy state - Green (trooper is inactive, ready to deploy) */
+.deploy-button[data-action="deploy"] {
+    background-color: #4CAF50; /* Green */
+}
+.deploy-button[data-action="deploy"]:hover {
+    background-color: #45a049;
+}
+
+/* Return state - Orange (trooper is active, can be returned) */
+.deploy-button[data-action="return"] {
+    background-color: #FF9800; /* Orange */
+}
+.deploy-button[data-action="return"]:hover {
+    background-color: #e68900;
+}
+
 /* Roster Grid */
 #roster-container {
     display: grid;
@@ -89,8 +121,8 @@ h1 {
 
 /* Trooper Card Styling */
 .trooper-card {
-    background-color: #3a3f4b;
-    border: 1px solid #555;
+    background-color: var(--background-card);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -123,11 +155,11 @@ h1 {
 .trooper-card textarea {
     width: 100%;
     padding: 8px;
-    background-color: #282c34;
+    background-color: var(--background-dark);
     color: var(--text-light);
-    border: 1px solid #555;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
-    box-sizing: border-box; /* Important for width */
+    box-sizing: border-box;
 }
 
 .trooper-card textarea {
@@ -139,22 +171,17 @@ h1 {
 
 /* 1. Target the specific select elements in the barracks card */
 .trooper-card select.trooper-input {
-    /* Base appearance */
-    background-color: #3e4451; /* Dark background to match chips */
-    color: var(--text-light); /* Light text color */
-    border: 1px solid #555;
+    background-color: var(--background-input);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 8px 10px;
     font-size: 14px;
-    
-    /* Remove default system styling */
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    
-    /* Ensure it aligns well in the grid */
     width: 100%;
-    box-sizing: border-box; 
+    box-sizing: border-box;
     cursor: pointer;
 }
 
@@ -188,9 +215,9 @@ h1 {
     box-shadow: 0 0 5px rgba(97, 218, 251, 0.5); /* Blue glow on focus */
 }
 
-/* 4. Styling the options (less customizable but helps) */
+/* 4. Styling the options */
 .trooper-card select.trooper-input option {
-    background-color: #3e4451; /* Keep options dark */
+    background-color: var(--background-input);
     color: var(--text-light);
     padding: 8px 0;
 }
@@ -198,20 +225,19 @@ h1 {
 /* --- Trooper Input Fields (Text, Number, Textarea) --- */
 
 .barracks-card .trooper-input {
-    background-color: #3e4451; /* Dark background to match select/chips */
-    color: var(--text-light); /* Light text color */
-    border: 1px solid #555;
+    background-color: var(--background-input);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 8px 10px;
     font-size: 14px;
-    box-sizing: border-box; 
+    box-sizing: border-box;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .barracks-card .trooper-input:focus {
     outline: none;
-    border-color: var(--main-accent); /* Light blue border on focus */
-
+    border-color: var(--main-accent);
 }
 
 .barracks-card .trooper-input:hover {
@@ -220,51 +246,42 @@ h1 {
 
 /* Specific styling for the Notes TEXTAREA */
 .barracks-card textarea.trooper-input {
-    resize: vertical; /* Allow vertical resizing, but not horizontal */
-    height: 80px; /* Give it a default height */
+    resize: vertical;
+    height: 80px;
 }
 
 /* --- Trooper Name Input --- */
 
 .barracks-card h2 input[type="text"] {
-    /* Resetting some default input styling */
     display: inline;
     margin: 0;
-    
-    /* Make it look like the header text */
-    font-size: 1em; /* Match h2 size */
+    font-size: 1em;
     font-weight: bold;
     color: inherit;
     background: transparent;
-    border: 1px solid transparent; /* Hide border normally */
+    border: 1px solid transparent;
     padding: 0;
-    
-    /* Ensure it has enough width to be useful */
-    width: calc(100% - 60px); 
+    width: calc(100% - 60px);
 }
 
-/* Only show a visible border when focused/hovered */
 .barracks-card h2 input[type="text"]:focus,
 .barracks-card h2 input[type="text"]:hover {
-    border: 1px solid #555; /* Use the standard border color */
-    background-color: #3e4451;
-    padding: 0 5px; /* Add slight padding when visible */
+    border: 1px solid var(--border-color);
+    background-color: var(--background-input);
+    padding: 0 5px;
     border-radius: 4px;
-    box-shadow: none; /* Keep the header clean */
+    box-shadow: none;
 }
 
-/* --- Max Grit Number Input --- */
-
+/* Max Grit Number Input */
 .barracks-card input[type="number"] {
-    /* Constrain the size, as it's a single number */
-    border: 1px solid #555; /* Use the standard border color */
-    background-color: #3e4451;
-    width: 60px; 
+    border: 1px solid var(--border-color);
+    background-color: var(--background-input);
+    width: 60px;
     text-align: center;
     appearance: textfield;
-
 }
-/* Hide spin buttons in Chrome/Safari/Edge */
+
 .barracks-card input[type="number"]::-webkit-inner-spin-button,
 .barracks-card input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -280,18 +297,17 @@ h1 {
 .trooper-card[data-status="Inactive"] { border-left: 5px solid var(--status-inactive); }
 
 
-/* --- LUCIDE ICON STYLES --- */
+/* Lucide Icon Styles */
 .icon-pips {
     display: flex;
     align-items: center;
     gap: 5px;
 }
 
-/* Base styling for all Lucide SVGs in the pips */
 .icon-pips svg {
     cursor: pointer;
-    stroke: var(--text-off); /* "Empty" outline color */
-    fill: none; /* "Empty" fill */
+    stroke: var(--text-off);
+    fill: none;
     width: 20px;
     height: 20px;
     transition: all 0.2s;
@@ -301,19 +317,16 @@ h1 {
     stroke: var(--main-accent); /* Highlight on hover */
 }
 
-/* Styling for the "filled" state */
 .icon-pips svg.filled {
     stroke-width: 2;
 }
 
-/* Grit: Flame */
 .icon-pips svg[data-lucide="flame"].filled {
     stroke: var(--grit-color);
-    fill: var(--grit-color); 
+    fill: var(--grit-color);
     fill-opacity: 0.4;
 }
 
-/* Ammo: Box */
 .icon-pips svg[data-lucide="box"].filled {
     stroke: var(--ammo-color);
     fill: var(--ammo-color);
@@ -321,16 +334,15 @@ h1 {
 }
 
 .icon-pips.counter-pips svg.filled {
-    /* Set the stroke and fill directly from the custom property */
     stroke: var(--counter-fill-color) !important;
-    fill: var(--counter-fill-color) !important; 
+    fill: var(--counter-fill-color) !important;
     fill-opacity: 0.4;
 }
 
-/* --- TAB STYLING --- */
+/* Tab Styling */
 #tabs {
     margin-bottom: 20px;
-    border-bottom: 1px solid #555;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 5px;
 }
 
@@ -347,16 +359,15 @@ h1 {
 }
 
 .tab-button:hover:not(.active) {
-    background-color: #3a3f4b;
+    background-color: var(--background-card);
 }
 
 .tab-button.active {
-    background-color: #3a3f4b;
+    background-color: var(--background-card);
     border-bottom: 3px solid var(--main-accent);
     font-weight: bold;
 }
 
-/* Hide / Show Views */
 .view {
     padding-top: 10px;
 }
@@ -383,18 +394,15 @@ h1 {
     color: var(--main-accent);
 }
 
-/* --- MISSION CARD ICON STYLING --- */
-
+/* Mission Card Icon Styling */
 .status-icon {
-    /* Base styling for the lucide icon */
     width: 1.2em;
     height: 1.2em;
     vertical-align: middle;
     margin-left: 5px;
-    transition: color 0.3s ease-in-out; /* Smooth color change */
+    transition: color 0.3s ease-in-out;
 }
 
-/* Status Coloring: Maps classes from missionCard.js to CSS variables */
 .status-icon.ok { color: var(--status-ok); }
 .status-icon.grazed { color: var(--status-grazed); }
 .status-icon.wounded { color: var(--status-wounded); }
@@ -402,22 +410,17 @@ h1 {
 .status-icon.dead { color: var(--status-dead); }
 .status-icon.inactive { color: var(--status-inactive); }
 
-
-/* --- PULSING ANIMATION FOR BLEEDING OUT --- */
-
-/* Define the pulsing animation */
 @keyframes pulse {
     0% { opacity: 1; }
     50% { opacity: 0.3; }
     100% { opacity: 1; }
 }
 
-/* Apply the animation when status is "Bleeding Out" */
 .status-icon.bleeding-pulse {
     animation: pulse 1s infinite;
 }
 
-/* --- CONFIRMATION MODAL STYLING --- */
+/* Confirmation Modal Styling */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -428,11 +431,15 @@ h1 {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000; /* Ensure it is above all other content */
+    z-index: 1000;
+}
+
+.modal-overlay.hidden {
+    display: none;
 }
 
 .modal-content {
-    background-color: #3a3f4b;
+    background-color: var(--background-card);
     color: var(--text-light);
     padding: 30px;
     border-radius: 8px;
@@ -443,7 +450,7 @@ h1 {
 }
 
 .modal-content h3 {
-    color: #f44336; 
+    color: var(--status-wounded);
     margin-top: 0;
 }
 
@@ -462,7 +469,7 @@ h1 {
 }
 
 .modal-cancel {
-    background-color: #555;
+    background-color: var(--border-color);
     color: var(--text);
 }
 .modal-cancel:hover {
@@ -470,21 +477,17 @@ h1 {
 }
 
 .modal-confirm {
-    background-color: #f44336; /* Red for deletion */
+    background-color: var(--status-wounded);
     color: var(--text);
 }
 .modal-confirm:hover {
     background-color: #da190b;
 }
 
-.hidden {
-    display: none;
-}
-
-/* --- TOOLTIP STYLING --- */
+/* Tooltip Styling */
 .gear-item, .item-select {
     position: relative;
-    cursor: help; /* Indicates interactivity */
+    cursor: help;
 }
 
 .tooltip {
@@ -496,32 +499,19 @@ h1 {
     padding: 8px 12px;
     position: absolute;
     z-index: 1001;
-    
-    /* MODIFIED: Reverting to display ABOVE element */
-    bottom: 120%; 
-    left: 0; /* Align to the left edge of the parent gear item */
-    transform: none; /* Removed horizontal center transform */
-    
+    bottom: 120%;
+    left: 0;
+    transform: none;
     opacity: 0;
     transition: opacity 0.3s;
     pointer-events: none;
     min-width: 250px;
     white-space: normal;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid #555;
-    
-    /* Constrain width */
+    border: 1px solid var(--border-color);
     max-width: 80vw;
 }
 
-/* Ensure the tooltip shows on hover */
-.gear-item:hover .tooltip,
-.item-select:hover .tooltip {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* Show the tooltip when hovering over the container */
 .gear-item:hover .tooltip,
 .item-select:hover .tooltip {
     visibility: visible;
@@ -529,7 +519,7 @@ h1 {
 }
 
 .gear-list {
-    grid-column: 1 / -1; /* Make the list span the whole width in the form-grid */
+    grid-column: 1 / -1;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -537,11 +527,11 @@ h1 {
 }
 
 .gear-list-item {
-    background-color: #555;
+    background-color: var(--border-color);
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.9em;
-    position: relative; /* Container for tooltip */
+    position: relative;
 }
 
 .remove-gear-btn {
@@ -557,11 +547,9 @@ h1 {
     color: #ff7961;
 }
 
-/* --- POSITION CHIP STYLING --- */
-
+/* Position Chip Styling */
 .position-chips-wrapper {
-    /* Ensures the chips take the full grid column */
-    grid-column: 2 / 3; 
+    grid-column: 2 / 3;
 }
 
 .position-chips-group {
@@ -572,72 +560,64 @@ h1 {
 
 .position-chip {
     padding: 6px 10px;
-    border: 1px solid #555;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     cursor: pointer;
     font-size: 13px;
-    background-color: #3e4451; /* Darker base */
+    background-color: var(--background-input);
     color: var(--text-off);
     transition: all 0.2s ease;
-    position: relative; /* For tooltip anchoring */
+    position: relative;
 }
 
-/* Tooltip adjustment for chips */
 .position-chip .tooltip {
-    /* Ensures tooltips show up correctly for chips */
-    bottom: -120%; 
+    bottom: -120%;
     left: 50%;
     transform: translateX(-50%);
     min-width: 200px;
     text-align: center;
 }
+
 .position-chip:hover .tooltip {
     visibility: visible;
     opacity: 1;
 }
 
-/* Base Hover State */
 .position-chip:hover {
     filter: brightness(1.2);
 }
 
-/* --- ACTIVE COLOR STATES --- */
-
-/* GREEN: Flanking, Fortified */
 .position-chip.green.active {
-    background-color: #4CAF50; /* Solid Green */
+    background-color: var(--status-ok);
     color: #222;
     border-color: #81c784;
-    box-shadow: 0 0 5px #4CAF50;
+    box-shadow: 0 0 5px var(--status-ok);
 }
 
-/* YELLOW: Engaged, In Cover */
 .position-chip.yellow.active {
-    background-color: #FFC107; /* Solid Yellow */
+    background-color: #FFC107;
     color: #222;
     border-color: #ffd54f;
     box-shadow: 0 0 5px #FFC107;
 }
 
-/* RED: Limited, Flanked */
 .position-chip.red.active {
-    background-color: #f44336; /* Solid Red */
+    background-color: var(--status-wounded);
     color: var(--text);
     border-color: #e57373;
-    box-shadow: 0 0 5px #f44336;
+    box-shadow: 0 0 5px var(--status-wounded);
 }
 
 .position-modifier {
-    grid-column: 1 / -1; /* Ensure the text spans the entire width under the chips */
+    grid-column: 1 / -1;
     font-size: 13px;
     margin-top: 5px;
     padding: 5px 0;
     color: var(--text-light);
-    /* Optional: Small border or background to visually separate the modifier */
-    border-top: 1px solid #444; 
+    border-top: 1px solid #444;
     padding-top: 10px;
 }
 
 .position-modifier strong {
-    color: var(--text-light); /* Highlight the actual bonus */
+    color: var(--text-light);
 }

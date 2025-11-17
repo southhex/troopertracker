@@ -5,7 +5,7 @@
  * @param {object} trooper - The trooper data object.
  * @param {string} armorSelectHtml - HTML for Armor dropdown.
  * @param {string} weaponSelectHtml - HTML for Weapon dropdown.
- *V @param {string} specialSelectHtml - HTML for Special dropdown.
+ * @param {string} specialSelectHtml - HTML for Special dropdown.
  * @param {string} gearListHtml - HTML string for the list of equipped items with remove buttons.
  * @returns {string} The complete HTML string for the barracks card.
  */
@@ -45,5 +45,8 @@ export function generateBarracksCard(trooper, armorSelectHtml, weaponSelectHtml,
             <label for="notes-${trooper.id}">Notes:</label>
             <textarea id="notes-${trooper.id}" class="trooper-input" data-id="${trooper.id}" data-field="notes">${trooper.notes}</textarea>
         </div>
+        <button class="deploy-button" data-id="${trooper.id}" data-action="${trooper.isActive ? 'return' : 'deploy'}">
+            ${trooper.isActive ? 'Return' : 'Deploy'}
+        </button>
     `;
 }
