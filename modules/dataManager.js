@@ -166,3 +166,16 @@ export function setEquipmentCounter(roster, id, counterField, amount) {
     }
     return roster;
 }
+
+/**
+ * Resets all active troopers to Engaged/In Cover positions
+ */
+export function resetAllPositions(roster) {
+    roster.forEach(trooper => {
+        if (trooper.isActive) {
+            trooper.offensivePosition = 'Engaged';
+            trooper.defensivePosition = 'In Cover';
+        }
+    });
+    return roster;
+}

@@ -112,7 +112,6 @@ export const EQUIPMENT_DATABASE = {
                 name: "Pack Ammo", 
                 max: 6, 
                 icon: "circle",
-                color: "navy"
             } 
         }
     },
@@ -136,7 +135,6 @@ export const EQUIPMENT_DATABASE = {
                 name: "Drone",
                 max:1,
                 icon: "drone",
-                color:"orange"
             }
         }
     },

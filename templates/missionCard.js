@@ -13,7 +13,7 @@ const getStatusClass = (status) => {
  * @param {string} ammoPips - HTML string for Ammo pips.
  * @param {string} equipmentPips - HTML string for Equipment counters.
  * @param {function} renderChips - Function passed from script.js to render position chips.
- * @param {string} gearListHtml - NEW: HTML string for the list of equipped items.
+ * @param {string} gearListHtml - HTML string for the list of equipped items.
  * @returns {string} The complete HTML string for the mission card.
  */
 export function generateMissionCard(trooper, gritPips, ammoPips, offChips, defChips, gearListHtml, equipmentPips) {
@@ -23,11 +23,11 @@ export function generateMissionCard(trooper, gritPips, ammoPips, offChips, defCh
     
     return `
         <h2>
-            ${trooper.name} <i class="status-icon ${statusClass} ${pulseClass}" data-lucide=activity></i>
+            ${trooper.name} 
         </h2>
 
         <div class="form-grid">
-            <label for="status-${trooper.id}">Status:</label>
+            <label for="status-${trooper.id}"><i class="status-icon ${statusClass} ${pulseClass}" data-lucide=activity></i></label>
             <select id="status-${trooper.id}" class="trooper-input" data-id="${trooper.id}" data-field="status">
                 <option value="OK" ${trooper.status === 'OK' ? 'selected' : ''}>OK</option>
                 <option value="Grazed" ${trooper.status === 'Grazed' ? 'selected' : ''}>Grazed</option>
@@ -43,12 +43,12 @@ export function generateMissionCard(trooper, gritPips, ammoPips, offChips, defCh
             <label>Ammo:</label>
             ${ammoPips}
 
-            <label>Off. Position:</label>
+            <label><i data-lucide=crosshair></i></label>
             <div class="position-chips-wrapper">
                 ${offChips}
             </div>
 
-            <label>Def. Position:</label>
+            <label><i data-lucide=arrow-left-right></i></label>
             <div class="position-chips-wrapper">
                 ${defChips}
             </div>

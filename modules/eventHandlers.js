@@ -42,8 +42,9 @@ export function handlePipClick(roster, event, renderCallback) {
 
 /**
  * Handles clicks on position chips.
+ * Now includes validation for cover/space limits
  */
-export function handlePositionClick(roster, event, renderCallback) {
+export function handlePositionClick(roster, event, renderCallback, missionState = null, showToastCallback = null) {
     const chip = event.target.closest('.position-chip');
     if (!chip) return;
 
@@ -57,6 +58,37 @@ export function handlePositionClick(roster, event, renderCallback) {
     if (!trooper) return;
 
     const newValue = trooper[field] === position ? 'N/A' : position;
+
+    // Validate position changes if mission state is available
+    if (missionState && newValue !== 'N/A') {
+        // Check Fortified position limit
+        if (field === 'defensivePosition' && newValue === 'Fortified') {
+            // Import validation function dynamically to avoid circular dependency
+            // We'll check this in the script.js handler instead
+            if (typeof window.validateFortified === 'function') {
+                const validation = window.validateFortified(roster, trooperId, missionState.cover);
+                if (!validation.valid) {
+                    if (showToastCallback) {
+                        showToastCallback(validation.reason, 'warning');
+                    }
+                    return; // Prevent position change
+                }
+            }
+        }
+
+        // Check Flanking position limit
+        if (field === 'offensivePosition' && newValue === 'Flanking') {
+            if (typeof window.validateFlanking === 'function') {
+                const validation = window.validateFlanking(roster, trooperId, missionState.space);
+                if (!validation.valid) {
+                    if (showToastCallback) {
+                        showToastCallback(validation.reason, 'warning');
+                    }
+                    return; // Prevent position change
+                }
+            }
+        }
+    }
 
     updateTrooper(roster, trooperId, field, newValue);
     saveRoster(roster);

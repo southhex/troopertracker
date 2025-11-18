@@ -3,6 +3,7 @@ import { POSITION_DEFS } from './config.js';
 import { getEquippedItem } from './utilities.js';
 import { generateMissionCard } from '../templates/missionCard.js';
 import { generateBarracksCard } from '../templates/barracksCard.js';
+import { renderEngagementHeader } from './engagementRenderer.js';
 
 /**
  * Generates the HTML for the Grit icons.
@@ -231,15 +232,26 @@ export function renderBarracksGearList(trooper) {
 }
 
 /**
- * Renders the Mission Roster view.
+ * Renders the Mission Roster view (now called Engagement view).
  */
-export function renderMissionRoster(roster, container) {
+export function renderMissionRoster(roster, container, missionState) {
     container.innerHTML = '';
+
+    // Render engagement header
+    const header = document.createElement('div');
+    header.id = 'engagement-header-container';
+    header.innerHTML = renderEngagementHeader(missionState);
+    container.appendChild(header);
+
+    // Create roster grid container
+    const rosterGrid = document.createElement('div');
+    rosterGrid.id = 'roster-grid';
 
     const activeTroopers = roster.filter(trooper => trooper.isActive);
 
     if (activeTroopers.length === 0) {
-        container.innerHTML = "<p>No active troopers deployed. Go to Barracks to deploy troopers!</p>";
+        rosterGrid.innerHTML = "<p>No active troopers deployed. Go to Barracks to deploy troopers!</p>";
+        container.appendChild(rosterGrid);
         return;
     }
 
@@ -258,14 +270,26 @@ export function renderMissionRoster(roster, container) {
             renderEquipmentPips(trooper)
         );
 
-        container.appendChild(card);
+        rosterGrid.appendChild(card);
     });
+
+    container.appendChild(rosterGrid);
+
+    // Add reset positions button at bottom
+    const resetButton = document.createElement('div');
+    resetButton.className = 'reset-positions-container';
+    resetButton.innerHTML = `
+        <button class="reset-positions-btn" data-action="reset-positions">
+            <i data-lucide="rotate-ccw"></i> Reset All Positions to Engaged/In Cover
+        </button>
+    `;
+    container.appendChild(resetButton);
 }
 
 /**
- * Renders the Barracks Roster view.
+ * Renders the Barracks Roster view with split-view layout.
  */
-export function renderBarracksRoster(roster, container) {
+export function renderBarracksRoster(roster, container, selectedTrooperId) {
     container.innerHTML = '';
 
     if (roster.length === 0) {
@@ -273,19 +297,68 @@ export function renderBarracksRoster(roster, container) {
         return;
     }
 
+    // Create the split-view structure
+    const splitView = document.createElement('div');
+    splitView.className = 'split-view';
+
+    // Create the left panel (trooper list)
+    const listPanel = document.createElement('div');
+    listPanel.className = 'trooper-list-panel';
+    listPanel.innerHTML = renderTrooperList(roster, selectedTrooperId);
+
+    // Create the right panel (trooper details)
+    const detailsPanel = document.createElement('div');
+    detailsPanel.className = 'trooper-details-panel';
+    detailsPanel.innerHTML = renderTrooperDetails(roster, selectedTrooperId);
+
+    splitView.appendChild(listPanel);
+    splitView.appendChild(detailsPanel);
+    container.appendChild(splitView);
+}
+
+/**
+ * Renders the list of trooper names for the left panel.
+ */
+function renderTrooperList(roster, selectedTrooperId) {
+    let html = '<div class="trooper-list">';
+
     roster.forEach(trooper => {
-        const card = document.createElement('div');
-        card.className = 'trooper-card barracks-card';
-        card.setAttribute('data-status', trooper.status);
+        const isSelected = trooper.id === selectedTrooperId ? 'selected' : '';
+        const statusClass = `status-${trooper.status.toLowerCase().replace(/\s+/g, '-')}`;
 
-        card.innerHTML = generateBarracksCard(
-            trooper,
-            renderArmorSelect(trooper),
-            renderWeaponSelect(trooper),
-            renderSpecialSelect(trooper),
-            renderBarracksGearList(trooper)
-        );
-
-        container.appendChild(card);
+        html += `
+            <div class="trooper-list-item ${isSelected} ${statusClass}" data-id="${trooper.id}">
+                <span class="trooper-name">${trooper.name || 'Unnamed Trooper'}</span>
+                <span class="trooper-status-badge">${trooper.status}</span>
+            </div>
+        `;
     });
+
+    html += '</div>';
+    return html;
+}
+
+/**
+ * Renders the details panel for the selected trooper.
+ */
+function renderTrooperDetails(roster, selectedTrooperId) {
+    const trooper = roster.find(t => t.id === selectedTrooperId);
+
+    if (!trooper) {
+        return '<p>No trooper selected.</p>';
+    }
+
+    const card = `
+        <div class="trooper-card barracks-card" data-status="${trooper.status}">
+            ${generateBarracksCard(
+                trooper,
+                renderArmorSelect(trooper),
+                renderWeaponSelect(trooper),
+                renderSpecialSelect(trooper),
+                renderBarracksGearList(trooper)
+            )}
+        </div>
+    `;
+
+    return card;
 }
